@@ -47,7 +47,9 @@ async function runChannelBasedSimulation() {
   
   console.log(`\n🤖 Agent V2 started for merchant: ${merchant.merchantId}`);
   console.log(`📱 Device: ${merchant.deviceType} | 📡 Network: ${merchant.networkProfile}`);
-  console.log(`🎯 Channel: ${merchant.channel || 'WEB'} | 🔗 Portal: ${merchant.portalUrl || 'default'}`);
+  console.log(`🎯 Channel: ${merchant.channel || 'WEB'}`);
+  console.log(`🔗 Portal URL: ${merchant.portalUrl || 'default'}`);
+  console.log(`💼 Digital Literacy: ${merchant.digitalLiteracy} | 💰 Income: ${merchant.incomeLevel}`);
   console.log('');
   
   const startTime = Date.now();
@@ -62,18 +64,32 @@ async function runChannelBasedSimulation() {
       portalUrl: merchant.portalUrl || 'https://m-pesaforbusiness.co.ke/apply'
     };
     
+    console.log(`📋 Channel Configuration:`);
+    console.log(`   Type: ${channelType}`);
+    console.log(`   Portal: ${channelConfig.portalUrl}`);
+    console.log(`   Device: ${channelConfig.deviceType}`);
+    console.log(`   Network: ${channelConfig.networkProfile}`);
+    console.log('');
+    
     channel = createChannel(channelType, channelConfig);
     
     // Initialize channel
+    console.log(`🔧 Initializing ${channelType} channel...`);
     await channel.initialize();
+    console.log(`✅ Channel initialized successfully`);
+    console.log('');
     
     // Execute onboarding journey
+    console.log(`🚀 Executing onboarding journey...`);
     const result = await channel.executeOnboarding(merchant);
+    console.log(`${result.success ? '✅' : '❌'} Onboarding ${result.success ? 'completed' : 'failed'}`);
     
     // Collect all insights from channel
     const insights = channel.getInsights();
+    console.log(`📊 Collected ${insights.length} insights from channel`);
     
     // Send all insights to Insight Service
+    console.log(`📤 Sending insights to Insight Service...`);
     for (const insight of insights) {
       await sendEventToInsightService({
         ...insight,
@@ -81,6 +97,7 @@ async function runChannelBasedSimulation() {
         merchantId: merchant.merchantId
       });
     }
+    console.log(`✅ All insights sent successfully`);
     
     // Calculate final metrics
     const completionTimeMs = Date.now() - startTime;

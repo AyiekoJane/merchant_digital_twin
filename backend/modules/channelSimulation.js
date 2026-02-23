@@ -24,10 +24,9 @@ function getAvailableChannels() {
 async function spawnChannelAgent(merchant, channelConfig, progressCallback) {
   const containerName = `agent_${merchant.merchantId}_${Date.now()}`;
   
-  // Merge merchant profile with channel config
+  // Merge merchant profile with portal URL from config
   const agentProfile = {
     ...merchant,
-    channel: channelConfig.channel || 'WEB',
     portalUrl: channelConfig.portalUrl || 'https://m-pesaforbusiness.co.ke/apply',
     scenarioId: channelConfig.scenarioId || 'channel-simulation'
   };
@@ -37,22 +36,30 @@ async function spawnChannelAgent(merchant, channelConfig, progressCallback) {
   
   const dockerCmd = `docker run --rm --name ${containerName} -e MERCHANT_PROFILE="${merchantProfile}" -e INSIGHT_SERVICE_URL="${insightServiceUrl}" ${DOCKER_IMAGE}`;
   
+  console.log(`🐳 Spawning container: ${containerName}`);
+  console.log(`   Portal: ${agentProfile.portalUrl}`);
+  console.log(`   Device: ${agentProfile.deviceType} | Network: ${agentProfile.networkProfile}`);
+  console.log(`   Literacy: ${agentProfile.digitalLiteracy} | Income: ${agentProfile.incomeLevel}`);
+  
   if (progressCallback) {
     progressCallback({
       merchantId: merchant.merchantId,
       status: 'starting',
-      message: 'Spawning agent container'
+      message: `Spawning agent for ${merchant.merchantId}`,
+      portalUrl: agentProfile.portalUrl
     });
   }
   
   try {
     const { stdout, stderr } = await execPromise(dockerCmd);
     
+    console.log(`✅ Agent ${merchant.merchantId} completed successfully`);
+    
     if (progressCallback) {
       progressCallback({
         merchantId: merchant.merchantId,
         status: 'completed',
-        message: 'Agent completed',
+        message: `Agent ${merchant.merchantId} completed onboarding`,
         output: stdout
       });
     }
@@ -65,11 +72,13 @@ async function spawnChannelAgent(merchant, channelConfig, progressCallback) {
     };
     
   } catch (error) {
+    console.error(`❌ Agent ${merchant.merchantId} failed: ${error.message}`);
+    
     if (progressCallback) {
       progressCallback({
         merchantId: merchant.merchantId,
         status: 'failed',
-        message: error.message
+        message: `Agent ${merchant.merchantId} failed: ${error.message}`
       });
     }
     
@@ -86,8 +95,7 @@ async function runChannelSimulation(merchants, config, progressCallback) {
   const results = [];
   const startTime = Date.now();
   
-  console.log(`\n🎯 Starting channel-based simulation`);
-  console.log(`📊 Channel: ${config.channel}`);
+  console.log(`\n🎯 Starting web portal simulation`);
   console.log(`🔗 Portal: ${config.portalUrl}`);
   console.log(`👥 Merchants: ${merchants.length}`);
   console.log('═'.repeat(60));

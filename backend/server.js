@@ -469,7 +469,7 @@ app.get('/channels', (req, res) => {
 
 app.post('/simulate/channel', async (req, res) => {
   try {
-    const { merchantCount, channel, portalUrl, simulationSpeed, networkVariability } = req.body;
+    const { merchantCount, portalUrl, simulationSpeed, networkVariability } = req.body;
     
     if (!cachedMerchants || cachedMerchants.length === 0) {
       return res.status(400).json({
@@ -483,14 +483,14 @@ app.post('/simulate/channel', async (req, res) => {
     const selectedMerchants = cachedMerchants.slice(0, count);
     
     const config = {
-      channel: channel || 'WEB',
       portalUrl: portalUrl || 'https://m-pesaforbusiness.co.ke/apply',
       simulationSpeed: simulationSpeed || 'normal',
       networkVariability: networkVariability !== false,
-      scenarioId: `channel-sim-${Date.now()}`
+      scenarioId: `portal-sim-${Date.now()}`
     };
     
-    console.log(`🚀 Starting channel simulation with ${count} merchants`);
+    console.log(`🚀 Starting web portal simulation with ${count} merchants`);
+    console.log(`🔗 Portal URL: ${config.portalUrl}`);
     
     // Run simulation in background
     runChannelSimulation(selectedMerchants, config, (progress) => {
@@ -506,16 +506,16 @@ app.post('/simulate/channel', async (req, res) => {
     // Return immediately
     res.json({
       success: true,
-      message: 'Channel simulation started',
+      message: 'Web portal simulation started',
       status: 'running',
       config: config,
       merchantCount: count
     });
     
   } catch (error) {
-    console.error('Error starting channel simulation:', error);
+    console.error('Error starting web portal simulation:', error);
     res.status(500).json({
-      error: 'Failed to start channel simulation',
+      error: 'Failed to start web portal simulation',
       message: error.message
     });
   }

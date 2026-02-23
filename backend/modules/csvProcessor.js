@@ -7,8 +7,7 @@ const VALID_VALUES = {
   incomeLevel: ['low', 'medium', 'high'],
   digitalLiteracy: ['basic', 'intermediate', 'advanced'],
   deviceType: ['android_low_end', 'android_mid', 'ios', 'feature_phone'],
-  networkProfile: ['4G_GOOD', '4G_UNSTABLE', '3G_POOR', '2G_EDGE'],
-  issueType: ['pin_reset', 'balance_check', 'transaction_failure', 'kyc_update', 'statement_request']
+  networkProfile: ['4G_GOOD', '4G_UNSTABLE', '3G_POOR', '2G_EDGE']
 };
 
 // Validate a single merchant profile
@@ -35,10 +34,6 @@ function validateMerchant(merchant, rowNumber) {
     errors.push(`Row ${rowNumber}: Invalid network_profile "${merchant.network_profile}"`);
   }
   
-  if (merchant.issue_type && !VALID_VALUES.issueType.includes(merchant.issue_type)) {
-    errors.push(`Row ${rowNumber}: Invalid issue_type "${merchant.issue_type}"`);
-  }
-  
   const patienceScore = parseFloat(merchant.patience_score);
   if (isNaN(patienceScore) || patienceScore < 0 || patienceScore > 1) {
     errors.push(`Row ${rowNumber}: patience_score must be between 0 and 1`);
@@ -61,8 +56,7 @@ function transformToMerchantProfile(row) {
     deviceType: row.device_type,
     networkProfile: row.network_profile,
     patienceScore: parseFloat(row.patience_score),
-    retryThreshold: parseInt(row.retry_threshold),
-    issueType: row.issue_type
+    retryThreshold: parseInt(row.retry_threshold)
   };
 }
 
@@ -74,7 +68,7 @@ async function parseCsvFile(filePath) {
     let rowNumber = 1;
     let headerChecked = false;
     const requiredColumns = ['merchant_id', 'income_level', 'digital_literacy', 'device_type', 
-                             'network_profile', 'patience_score', 'retry_threshold', 'issue_type'];
+                             'network_profile', 'patience_score', 'retry_threshold'];
     
     if (!fs.existsSync(filePath)) {
       return reject(new Error(`File not found at path: ${filePath}`));

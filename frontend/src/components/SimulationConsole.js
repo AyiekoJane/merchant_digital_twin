@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './SimulationConsole.css';
 import CSVUploader from './simulation/CSVUploader';
-import ChannelSelector from './simulation/ChannelSelector';
 import UrlInput from './simulation/UrlInput';
 import SimulationControls from './simulation/SimulationControls';
 import RunSimulationButton from './simulation/RunSimulationButton';
@@ -12,7 +11,6 @@ function SimulationConsole({ onNavigate }) {
     network: null,
     bio: null
   });
-  const [selectedChannel, setSelectedChannel] = useState('WEB');
   const [portalUrl, setPortalUrl] = useState('https://m-pesaforbusiness.co.ke/apply');
   const [merchantCount, setMerchantCount] = useState(5);
   const [simulationSpeed, setSimulationSpeed] = useState('normal');
@@ -104,7 +102,6 @@ function SimulationConsole({ onNavigate }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           merchantCount,
-          channel: selectedChannel,
           portalUrl,
           simulationSpeed,
           networkVariability
@@ -144,11 +141,6 @@ function SimulationConsole({ onNavigate }) {
           uploadedFiles={uploadedFiles}
           onFileUpload={handleFileUpload}
           preFilledFiles={preFilledFiles}
-        />
-
-        <ChannelSelector
-          selectedChannel={selectedChannel}
-          onChannelSelect={setSelectedChannel}
         />
 
         <UrlInput

@@ -7,8 +7,7 @@ const VALID_VALUES = {
   incomeLevel: ['low', 'medium', 'high'],
   digitalLiteracy: ['basic', 'intermediate', 'advanced'],
   deviceType: ['android_low_end', 'android_mid', 'ios', 'feature_phone'],
-  networkProfile: ['4G_GOOD', '4G_UNSTABLE', '3G_POOR', '2G_EDGE'],
-  issueType: ['pin_reset', 'balance_check', 'transaction_failure', 'kyc_update', 'statement_request']
+  networkProfile: ['4G_GOOD', '4G_UNSTABLE', '3G_POOR', '2G_EDGE']
 };
 
 // Validate a single merchant profile
@@ -37,10 +36,6 @@ function validateMerchant(merchant, rowNumber) {
     errors.push(`Row ${rowNumber}: Invalid network_profile "${merchant.network_profile}"`);
   }
   
-  if (merchant.issue_type && !VALID_VALUES.issueType.includes(merchant.issue_type)) {
-    errors.push(`Row ${rowNumber}: Invalid issue_type "${merchant.issue_type}"`);
-  }
-  
   // Validate numeric fields
   const patienceScore = parseFloat(merchant.patience_score);
   if (isNaN(patienceScore) || patienceScore < 0 || patienceScore > 1) {
@@ -64,8 +59,7 @@ function transformToMerchantProfile(row) {
     deviceType: row.device_type,
     networkProfile: row.network_profile,
     patienceScore: parseFloat(row.patience_score),
-    retryThreshold: parseInt(row.retry_threshold),
-    issueType: row.issue_type
+    retryThreshold: parseInt(row.retry_threshold)
   };
 }
 

@@ -1,31 +1,31 @@
-merchant_id,business_name,business_type,location,phone,email,income_level,digital_literacy,device_type,network_profile,patience_score,retry_threshold,issue_type
-M001,Mama Njeri's Shop,retail,Nairobi,+254712345001,mama.njeri@example.com,medium,intermediate,android_mid,4G_GOOD,0.7,3,balance_check
-M002,Kibera Fresh Produce,agriculture,Kibera,+254712345002,kibera.fresh@example.com,low,basic,android_low_end,3G_POOR,0.4,4,transaction_failure
-M003,Tech Solutions Ltd,services,Westlands,+254712345003,tech.solutions@example.com,high,advanced,ios,4G_GOOD,0.9,2,kyc_update
-M004,Gikomba Textiles,retail,Gikomba,+254712345004,gikomba.textiles@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.6,3,pin_reset
-M005,Mombasa Fish Market,agriculture,Mombasa,+254712345005,mombasa.fish@example.com,low,basic,android_low_end,2G_EDGE,0.3,5,statement_request
-M006,Nairobi Consulting,services,CBD,+254712345006,nairobi.consulting@example.com,high,advanced,ios,4G_GOOD,0.8,2,balance_check
-M007,Kawangware Hardware,retail,Kawangware,+254712345007,kawangware.hardware@example.com,medium,intermediate,android_mid,3G_POOR,0.5,4,transaction_failure
-M008,Kisumu Dairy Farm,agriculture,Kisumu,+254712345008,kisumu.dairy@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.6,3,kyc_update
-M009,Eldoret Transport,services,Eldoret,+254712345009,eldoret.transport@example.com,high,advanced,android_mid,4G_GOOD,0.8,2,pin_reset
-M010,Mathare Salon,services,Mathare,+254712345010,mathare.salon@example.com,low,basic,android_low_end,3G_POOR,0.4,4,balance_check
-M011,Karen Boutique,retail,Karen,+254712345011,karen.boutique@example.com,high,advanced,ios,4G_GOOD,0.9,1,statement_request
-M012,Nakuru Poultry,agriculture,Nakuru,+254712345012,nakuru.poultry@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.7,3,transaction_failure
-M013,Thika Electronics,retail,Thika,+254712345013,thika.electronics@example.com,medium,intermediate,android_mid,4G_GOOD,0.6,3,kyc_update
-M014,Nyeri Coffee Farm,agriculture,Nyeri,+254712345014,nyeri.coffee@example.com,high,advanced,android_mid,4G_GOOD,0.8,2,pin_reset
-M015,Ruiru Pharmacy,services,Ruiru,+254712345015,ruiru.pharmacy@example.com,medium,intermediate,android_mid,3G_POOR,0.5,3,balance_check
-M016,Rongai Butchery,retail,Rongai,+254712345016,rongai.butchery@example.com,low,basic,android_low_end,2G_EDGE,0.3,5,statement_request
-M017,Kitengela Construction,services,Kitengela,+254712345017,kitengela.construction@example.com,high,advanced,android_mid,4G_GOOD,0.9,2,transaction_failure
-M018,Machakos Grocery,retail,Machakos,+254712345018,machakos.grocery@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.6,3,kyc_update
-M019,Kajiado Livestock,agriculture,Kajiado,+254712345019,kajiado.livestock@example.com,medium,intermediate,android_mid,3G_POOR,0.5,4,pin_reset
-M020,Limuru Tea Estate,agriculture,Limuru,+254712345020,limuru.tea@example.com,high,advanced,ios,4G_GOOD,0.8,2,balance_check
-M021,Kangemi Barbershop,services,Kangemi,+254712345021,kangemi.barber@example.com,low,basic,android_low_end,3G_POOR,0.4,4,statement_request
-M022,Kilimani Restaurant,services,Kilimani,+254712345022,kilimani.restaurant@example.com,high,advanced,android_mid,4G_GOOD,0.9,2,transaction_failure
-M023,Eastleigh Clothing,retail,Eastleigh,+254712345023,eastleigh.clothing@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.6,3,kyc_update
-M024,Malindi Fishing,agriculture,Malindi,+254712345024,malindi.fishing@example.com,low,basic,android_low_end,2G_EDGE,0.3,5,pin_reset
-M025,Nanyuki Logistics,services,Nanyuki,+254712345025,nanyuki.logistics@example.com,high,advanced,android_mid,4G_GOOD,0.8,2,balance_check
-M026,Kitale Maize Farm,agriculture,Kitale,+254712345026,kitale.maize@example.com,medium,intermediate,android_mid,3G_POOR,0.6,3,statement_request
-M027,Bungoma Supermarket,retail,Bungoma,+254712345027,bungoma.supermarket@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.7,3,transaction_failure
-M028,Kakamega Tailoring,services,Kakamega,+254712345028,kakamega.tailoring@example.com,low,basic,android_low_end,3G_POOR,0.4,4,kyc_update
-M029,Kisii Banana Farm,agriculture,Kisii,+254712345029,kisii.banana@example.com,low,basic,android_low_end,2G_EDGE,0.3,5,pin_reset
-M030,Meru Honey Production,agriculture,Meru,+254712345030,meru.honey@example.com,medium,advanced,android_mid,4G_GOOD,0.7,3,balance_check
+merchant_id,business_name,business_type,location,phone,email,income_level,digital_literacy,device_type,network_profile,patience_score,retry_threshold
+M001,Mama Njeri's Shop,retail,Nairobi,+254712345001,mama.njeri@example.com,medium,intermediate,android_mid,4G_GOOD,0.7,3
+M002,Kibera Fresh Produce,agriculture,Kibera,+254712345002,kibera.fresh@example.com,low,basic,android_low_end,3G_POOR,0.4,4
+M003,Tech Solutions Ltd,services,Westlands,+254712345003,tech.solutions@example.com,high,advanced,ios,4G_GOOD,0.9,2
+M004,Gikomba Textiles,retail,Gikomba,+254712345004,gikomba.textiles@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.6,3
+M005,Mombasa Fish Market,agriculture,Mombasa,+254712345005,mombasa.fish@example.com,low,basic,android_low_end,2G_EDGE,0.3,5
+M006,Nairobi Consulting,services,CBD,+254712345006,nairobi.consulting@example.com,high,advanced,ios,4G_GOOD,0.8,2
+M007,Kawangware Hardware,retail,Kawangware,+254712345007,kawangware.hardware@example.com,medium,intermediate,android_mid,3G_POOR,0.5,4
+M008,Kisumu Dairy Farm,agriculture,Kisumu,+254712345008,kisumu.dairy@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.6,3
+M009,Eldoret Transport,services,Eldoret,+254712345009,eldoret.transport@example.com,high,advanced,android_mid,4G_GOOD,0.8,2
+M010,Mathare Salon,services,Mathare,+254712345010,mathare.salon@example.com,low,basic,android_low_end,3G_POOR,0.4,4
+M011,Karen Boutique,retail,Karen,+254712345011,karen.boutique@example.com,high,advanced,ios,4G_GOOD,0.9,1
+M012,Nakuru Poultry,agriculture,Nakuru,+254712345012,nakuru.poultry@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.7,3
+M013,Thika Electronics,retail,Thika,+254712345013,thika.electronics@example.com,medium,intermediate,android_mid,4G_GOOD,0.6,3
+M014,Nyeri Coffee Farm,agriculture,Nyeri,+254712345014,nyeri.coffee@example.com,high,advanced,android_mid,4G_GOOD,0.8,2
+M015,Ruiru Pharmacy,services,Ruiru,+254712345015,ruiru.pharmacy@example.com,medium,intermediate,android_mid,3G_POOR,0.5,3
+M016,Rongai Butchery,retail,Rongai,+254712345016,rongai.butchery@example.com,low,basic,android_low_end,2G_EDGE,0.3,5
+M017,Kitengela Construction,services,Kitengela,+254712345017,kitengela.construction@example.com,high,advanced,android_mid,4G_GOOD,0.9,2
+M018,Machakos Grocery,retail,Machakos,+254712345018,machakos.grocery@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.6,3
+M019,Kajiado Livestock,agriculture,Kajiado,+254712345019,kajiado.livestock@example.com,medium,intermediate,android_mid,3G_POOR,0.5,4
+M020,Limuru Tea Estate,agriculture,Limuru,+254712345020,limuru.tea@example.com,high,advanced,ios,4G_GOOD,0.8,2
+M021,Kangemi Barbershop,services,Kangemi,+254712345021,kangemi.barber@example.com,low,basic,android_low_end,3G_POOR,0.4,4
+M022,Kilimani Restaurant,services,Kilimani,+254712345022,kilimani.restaurant@example.com,high,advanced,android_mid,4G_GOOD,0.9,2
+M023,Eastleigh Clothing,retail,Eastleigh,+254712345023,eastleigh.clothing@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.6,3
+M024,Malindi Fishing,agriculture,Malindi,+254712345024,malindi.fishing@example.com,low,basic,android_low_end,2G_EDGE,0.3,5
+M025,Nanyuki Logistics,services,Nanyuki,+254712345025,nanyuki.logistics@example.com,high,advanced,android_mid,4G_GOOD,0.8,2
+M026,Kitale Maize Farm,agriculture,Kitale,+254712345026,kitale.maize@example.com,medium,intermediate,android_mid,3G_POOR,0.6,3
+M027,Bungoma Supermarket,retail,Bungoma,+254712345027,bungoma.supermarket@example.com,medium,intermediate,android_mid,4G_UNSTABLE,0.7,3
+M028,Kakamega Tailoring,services,Kakamega,+254712345028,kakamega.tailoring@example.com,low,basic,android_low_end,3G_POOR,0.4,4
+M029,Kisii Banana Farm,agriculture,Kisii,+254712345029,kisii.banana@example.com,low,basic,android_low_end,2G_EDGE,0.3,5
+M030,Meru Honey Production,agriculture,Meru,+254712345030,meru.honey@example.com,medium,advanced,android_mid,4G_GOOD,0.7,3

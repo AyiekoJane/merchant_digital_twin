@@ -36,6 +36,8 @@ class WebChannel extends BaseChannel {
   async executeOnboarding(merchantProfile) {
     console.log(`\n🚀 Starting onboarding for ${merchantProfile.merchantId}`);
     console.log(`📱 Device: ${merchantProfile.deviceType} | 📡 Network: ${merchantProfile.networkProfile}`);
+    console.log(`🔗 Portal URL: ${this.portalUrl}`);
+    console.log(`💼 Digital Literacy: ${merchantProfile.digitalLiteracy} | 💰 Income: ${merchantProfile.incomeLevel}`);
     
     const startTime = Date.now();
     let currentStep = 0;
@@ -106,6 +108,8 @@ class WebChannel extends BaseChannel {
   async navigateToPortal(merchantProfile) {
     const stepStart = Date.now();
     
+    console.log(`  🌐 Navigating to portal: ${this.portalUrl}`);
+    
     try {
       // Simulate network delay
       await this.simulateNetworkDelay(merchantProfile.networkProfile);
@@ -125,11 +129,13 @@ class WebChannel extends BaseChannel {
         merchantId: merchantProfile.merchantId,
         event: 'PAGE_LOAD',
         step: 'portal_landing',
+        url: this.portalUrl,
         loadTimeMs: loadTime,
+        networkProfile: merchantProfile.networkProfile,
         success: true
       });
       
-      console.log(`  ✓ Portal loaded (${loadTime}ms)`);
+      console.log(`  ✓ Portal loaded successfully (${loadTime}ms) - Status: ${response.status()}`);
       
       // Simulate user reading/thinking time
       await this.simulateUserDelay(merchantProfile.digitalLiteracy, 'reading');
@@ -141,17 +147,20 @@ class WebChannel extends BaseChannel {
         merchantId: merchantProfile.merchantId,
         event: 'PAGE_LOAD_FAILED',
         step: 'portal_landing',
+        url: this.portalUrl,
         loadTimeMs: loadTime,
         error: error.message,
         success: false
       });
       
+      console.error(`  ✗ Failed to load portal: ${error.message}`);
       throw new Error(`Failed to load portal: ${error.message}`);
     }
   }
 
   async fillBusinessInfo(merchantProfile) {
     console.log('  📝 Filling business information...');
+    console.log(`     Literacy level: ${merchantProfile.digitalLiteracy} - adjusting interaction speed`);
     
     // Simulate finding and filling form fields
     await this.simulateUserDelay(merchantProfile.digitalLiteracy, 'form_interaction');
@@ -166,11 +175,12 @@ class WebChannel extends BaseChannel {
       await this.fillField(field, merchantProfile);
     }
     
-    console.log('  ✓ Business info filled');
+    console.log('  ✓ Business info filled successfully');
   }
 
   async fillContactInfo(merchantProfile) {
     console.log('  📞 Filling contact information...');
+    console.log(`     Network: ${merchantProfile.networkProfile} - simulating network conditions`);
     
     await this.simulateUserDelay(merchantProfile.digitalLiteracy, 'form_interaction');
     
@@ -183,11 +193,12 @@ class WebChannel extends BaseChannel {
       await this.fillField(field, merchantProfile);
     }
     
-    console.log('  ✓ Contact info filled');
+    console.log('  ✓ Contact info filled successfully');
   }
 
   async fillDocumentation(merchantProfile) {
     console.log('  📄 Handling documentation...');
+    console.log(`     User experience level: ${merchantProfile.digitalLiteracy}`);
     
     await this.simulateUserDelay(merchantProfile.digitalLiteracy, 'document_upload');
     
@@ -195,11 +206,14 @@ class WebChannel extends BaseChannel {
     if (merchantProfile.digitalLiteracy === 'basic') {
       // Basic users may struggle with document upload
       if (Math.random() < 0.3) {
+        console.log('  ⚠️  User experiencing confusion with document upload (basic literacy)');
+        
         this.collectInsight({
           merchantId: merchantProfile.merchantId,
           event: 'DOCUMENT_UPLOAD_CONFUSION',
           step: 'documentation',
-          digitalLiteracy: merchantProfile.digitalLiteracy
+          digitalLiteracy: merchantProfile.digitalLiteracy,
+          delayAdded: 2000
         });
         
         // Extra delay for confusion
@@ -207,23 +221,26 @@ class WebChannel extends BaseChannel {
       }
     }
     
-    console.log('  ✓ Documentation handled');
+    console.log('  ✓ Documentation handled successfully');
   }
 
   async submitApplication(merchantProfile) {
     console.log('  📤 Submitting application...');
+    console.log(`     Final validation with network: ${merchantProfile.networkProfile}`);
     
     await this.simulateUserDelay(merchantProfile.digitalLiteracy, 'submission');
     await this.simulateNetworkDelay(merchantProfile.networkProfile);
     
     // Simulate submission success/failure based on profile
     const successProbability = this.calculateSuccessProbability(merchantProfile);
+    console.log(`     Success probability: ${(successProbability * 100).toFixed(1)}%`);
     
     if (Math.random() > successProbability) {
+      console.error('  ✗ Submission failed - validation error');
       throw new Error('Submission failed - validation error');
     }
     
-    console.log('  ✓ Application submitted');
+    console.log('  ✓ Application submitted successfully');
   }
 
   async fillField(field, merchantProfile) {
@@ -232,11 +249,14 @@ class WebChannel extends BaseChannel {
     try {
       // Simulate typing delay based on digital literacy
       const typingDelay = this.getTypingDelay(merchantProfile.digitalLiteracy);
+      console.log(`     Filling field: ${field.name} (${typingDelay}ms typing delay)`);
       await this.sleep(typingDelay);
       
       // Simulate validation
       if (Math.random() < 0.1) {
         // 10% chance of validation error
+        console.log(`     ⚠️  Validation error on ${field.name} - retrying`);
+        
         this.collectInsight({
           merchantId: merchantProfile.merchantId,
           event: 'VALIDATION_ERROR',
@@ -254,10 +274,15 @@ class WebChannel extends BaseChannel {
         merchantId: merchantProfile.merchantId,
         event: 'FIELD_FILLED',
         field: field.name,
-        fillTimeMs: fillTime
+        fillTimeMs: fillTime,
+        digitalLiteracy: merchantProfile.digitalLiteracy
       });
       
+      console.log(`     ✓ Field ${field.name} completed (${fillTime}ms)`);
+      
     } catch (error) {
+      console.error(`     ✗ Failed to fill field ${field.name}: ${error.message}`);
+      
       this.collectInsight({
         merchantId: merchantProfile.merchantId,
         event: 'FIELD_FILL_FAILED',

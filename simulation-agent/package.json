@@ -1,11 +1,10 @@
 {
   "name": "simulation-agent",
-  "version": "2.0.0",
-  "description": "AI agent that simulates merchant behavior with channel support",
+  "version": "3.0.0",
+  "description": "AI agent that simulates merchant onboarding behavior on web portal",
   "main": "agent.js",
   "scripts": {
     "start": "node agent.js",
-    "start:v2": "node agent-v2.js",
     "install:playwright": "npx playwright install chromium"
   },
   "dependencies": {

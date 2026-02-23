@@ -67,25 +67,73 @@ function LiveInsights() {
     const merchantId = event.merchantId || 'Unknown';
     const eventType = event.event || event.eventType || 'event';
     
+    // Extract additional context
+    const network = event.networkProfile ? ` [${event.networkProfile}]` : '';
+    const literacy = event.digitalLiteracy ? ` [${event.digitalLiteracy}]` : '';
+    const device = event.deviceType ? ` [${event.deviceType}]` : '';
+    const latency = event.latency ? ` (${event.latency}ms)` : '';
+    const step = event.step ? ` - ${event.step}` : '';
+    const url = event.url ? ` at ${event.url}` : '';
+    
     switch (eventType) {
-      case 'SIMULATION_START':
-        return `🚀 Agent ${merchantId} started onboarding simulation`;
-      case 'STEP_COMPLETED':
-        return `✅ Agent ${merchantId} completed step: ${event.step || 'unknown'}`;
+      case 'ONBOARDING_SUMMARY':
+      case 'SUMMARY':
+        const outcome = event.summary?.success ? '✅ SUCCESS' : '❌ FAILED';
+        const time = event.summary?.completionTimeMs ? ` in ${event.summary.completionTimeMs}ms` : '';
+        const attempts = event.summary?.totalAttempts ? ` (${event.summary.totalAttempts} attempts)` : '';
+        return `${outcome} ${merchantId}${time}${attempts}${network}${literacy}`;
+        
+      case 'PAGE_LOAD':
+        return `🌐 ${merchantId} loaded portal${url}${latency}${network}`;
+        
+      case 'PAGE_LOAD_FAILED':
+        return `❌ ${merchantId} failed to load portal${url}: ${event.error || 'unknown'}${network}`;
+        
+      case 'FIELD_FILLED':
+        return `✏️ ${merchantId} filled field: ${event.field || 'unknown'}${latency}${literacy}`;
+        
       case 'VALIDATION_ERROR':
-        return `⚠️ Agent ${merchantId} encountered validation error: ${event.error || 'unknown'}`;
+        return `⚠️ ${merchantId} validation error on ${event.field || 'field'} - retrying${literacy}`;
+        
+      case 'DOCUMENT_UPLOAD_CONFUSION':
+        return `😕 ${merchantId} experiencing confusion with document upload${literacy}`;
+        
+      case 'ONBOARDING_COMPLETE':
+        return `✅ ${merchantId} completed onboarding${latency}${device}${network}`;
+        
+      case 'ONBOARDING_FAILED':
+        return `❌ ${merchantId} onboarding failed${step}: ${event.error || 'unknown'}${device}`;
+        
+      case 'ATTEMPT':
+        const result = event.result === 'success' ? '✅' : '🔄';
+        return `${result} ${merchantId} attempt ${event.attempt || 1}${latency}${network}${literacy}`;
+        
+      case 'ONBOARDING_ATTEMPT':
+        const attemptResult = event.result === 'success' ? '✅' : '🔄';
+        return `${attemptResult} ${merchantId} onboarding attempt ${event.attempt || 1}${latency}`;
+        
+      case 'AGENT_ERROR':
+        return `💥 ${merchantId} agent error: ${event.error || 'unknown'}`;
+        
+      case 'SIMULATION_START':
+        return `🚀 ${merchantId} started simulation${device}${network}${literacy}`;
+        
+      case 'STEP_COMPLETED':
+        return `✅ ${merchantId} completed${step}${latency}`;
+        
       case 'RETRY_ATTEMPT':
-        return `🔄 Agent ${merchantId} retrying (attempt ${event.retryCount || 1})`;
-      case 'RESOLUTION_SUCCESS':
-        return `✅ Agent ${merchantId} completed onboarding successfully`;
-      case 'RESOLUTION_FAILURE':
-        return `❌ Agent ${merchantId} failed onboarding: ${event.reason || 'unknown'}`;
+        return `🔄 ${merchantId} retrying (attempt ${event.retryCount || event.attempt || 1})${network}`;
+        
       case 'NETWORK_DELAY':
-        return `📡 Agent ${merchantId} experiencing network delay (${event.latency || 0}ms)`;
+        return `📡 ${merchantId} network delay${latency}${network}`;
+        
       case 'TIMEOUT':
-        return `⏱️ Agent ${merchantId} timed out on step: ${event.step || 'unknown'}`;
+        return `⏱️ ${merchantId} timeout${step}${network}`;
+        
       default:
-        return `📝 Agent ${merchantId}: ${eventType}`;
+        // Generic format with all available context
+        const context = [network, literacy, device, latency, step].filter(Boolean).join(' ');
+        return `📝 ${merchantId}: ${eventType}${context ? ' ' + context : ''}`;
     }
   };
 
