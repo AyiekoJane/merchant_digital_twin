@@ -255,6 +255,26 @@ function getInsightsByScenario() {
   return insights;
 }
 
+// Get recent events for live log display
+function getRecentEvents(limit = 50) {
+  // Return most recent events, sorted by timestamp (newest first)
+  return events
+    .slice(-limit)
+    .reverse()
+    .map(event => ({
+      merchantId: event.merchantId,
+      event: event.event,
+      eventType: event.eventType || event.event,
+      timestamp: event.timestamp || event.receivedAt,
+      step: event.step,
+      error: event.error,
+      reason: event.reason,
+      retryCount: event.retryCount,
+      latency: event.latency,
+      scenarioId: event.scenarioId
+    }));
+}
+
 module.exports = {
   storeEvent,
   getEventCount,
@@ -263,5 +283,6 @@ module.exports = {
   getInsightsByNetwork,
   getInsightsByLiteracy,
   getInsightsByScenario,
+  getRecentEvents,
   events
 };

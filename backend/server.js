@@ -81,6 +81,97 @@ app.get('/health', (req, res) => {
 // MERCHANT ENDPOINTS
 // ============================================================================
 
+app.get('/merchants/available-csvs', (req, res) => {
+  try {
+    const dataDir = path.join(__dirname, '..', 'data');
+    
+    if (!fs.existsSync(dataDir)) {
+      return res.json({ csvFiles: {} });
+    }
+    
+    const files = fs.readdirSync(dataDir);
+    const csvFiles = {};
+    
+    // Check for specific CSV files
+    const fileMapping = {
+      merchants: ['merchant_onboarding_data.csv', 'merchants.csv'],
+      network: ['network_metrics.csv'],
+      bio: ['merchant_bio_profile.csv', 'merchant_profile.csv']
+    };
+    
+    for (const [type, possibleNames] of Object.entries(fileMapping)) {
+      for (const fileName of possibleNames) {
+        if (files.includes(fileName)) {
+          const filePath = path.join(dataDir, fileName);
+          const stats = fs.statSync(filePath);
+          csvFiles[type] = {
+            fileName: fileName,
+            size: stats.size,
+            modified: stats.mtime
+          };
+          break;
+        }
+      }
+    }
+    
+    res.json({ csvFiles });
+  } catch (error) {
+    console.error('Error checking available CSVs:', error);
+    res.status(500).json({ error: 'Failed to check available CSV files' });
+  }
+});
+
+app.post('/merchants/load-default', async (req, res) => {
+  try {
+    const { fileName } = req.body;
+    
+    if (!fileName) {
+      return res.status(400).json({
+        error: 'No file name provided',
+        message: 'Please specify a fileName to load'
+      });
+    }
+    
+    const dataDir = path.join(__dirname, '..', 'data');
+    const filePath = path.join(dataDir, fileName);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        error: 'File not found',
+        message: `CSV file not found: ${fileName}`
+      });
+    }
+    
+    console.log(`📥 Loading default CSV: ${fileName}`);
+    
+    try {
+      const merchants = await parseCsvFile(filePath);
+      cachedMerchants = merchants;
+      
+      console.log(`✅ Successfully loaded ${merchants.length} merchants from ${fileName}`);
+      
+      res.json({
+        success: true,
+        merchantCount: merchants.length,
+        fileName: fileName
+      });
+    } catch (parseError) {
+      console.error('❌ Error parsing CSV:', parseError.message);
+      res.status(400).json({
+        error: 'CSV Processing Failed',
+        message: parseError.message,
+        fileName: fileName
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error loading default CSV:', error.message);
+    res.status(500).json({
+      error: 'Server Error',
+      message: error.message || 'An unexpected error occurred'
+    });
+  }
+});
+
 app.get('/merchants', async (req, res) => {
   try {
     if (!cachedMerchants) {
@@ -103,27 +194,51 @@ app.post('/merchants/upload', upload.single('csvFile'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
-        error: 'No CSV file uploaded',
-        hint: 'Send a CSV file with field name "csvFile"'
+        error: 'No file uploaded',
+        message: 'Please select a CSV file to upload',
+        hint: 'File must be in CSV format with required columns'
       });
     }
     
     console.log(`📥 Processing uploaded CSV: ${req.file.originalname}`);
-    const merchants = await parseCsvFile(req.file.path);
-    cachedMerchants = merchants;
     
-    console.log(`✅ Successfully processed ${merchants.length} merchants`);
-    
-    res.json({
-      success: true,
-      merchantCount: merchants.length,
-      merchants: merchants
-    });
+    try {
+      const merchants = await parseCsvFile(req.file.path);
+      cachedMerchants = merchants;
+      
+      console.log(`✅ Successfully processed ${merchants.length} merchants`);
+      
+      res.json({
+        success: true,
+        merchantCount: merchants.length,
+        merchants: merchants
+      });
+    } catch (parseError) {
+      // Enhanced error messages for CSV parsing errors
+      let errorMessage = parseError.message;
+      let hint = '';
+      
+      if (errorMessage.includes('CSV validation failed')) {
+        hint = 'Check that all required columns are present and values are valid';
+      } else if (errorMessage.includes('CSV file not found')) {
+        hint = 'File upload may have failed. Please try again';
+      } else if (errorMessage.includes('CSV parsing error')) {
+        hint = 'Make sure the file is a valid CSV format';
+      }
+      
+      return res.status(400).json({
+        error: 'CSV Processing Failed',
+        message: errorMessage,
+        hint: hint,
+        fileName: req.file.originalname
+      });
+    }
   } catch (error) {
-    console.error('❌ Error processing CSV:', error.message);
-    res.status(400).json({
-      error: 'Failed to process CSV file',
-      message: error.message
+    console.error('❌ Error processing upload:', error.message);
+    res.status(500).json({
+      error: 'Server Error',
+      message: error.message || 'An unexpected error occurred',
+      hint: 'Please try again or contact support if the issue persists'
     });
   }
 });
@@ -311,6 +426,26 @@ app.delete('/insights/clear', (req, res) => {
     res.status(500).json({
       error: 'Failed to clear events',
       message: error.message
+    });
+  }
+});
+
+app.get('/events/recent', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const { getRecentEvents } = require('./modules/metrics');
+    const events = getRecentEvents(limit);
+    
+    res.json({
+      events: events,
+      count: events.length
+    });
+  } catch (error) {
+    console.error('Error fetching recent events:', error);
+    res.status(500).json({
+      error: 'Failed to fetch recent events',
+      message: error.message,
+      events: []
     });
   }
 });

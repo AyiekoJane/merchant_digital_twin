@@ -6,6 +6,8 @@ function Dashboard() {
   const [scenarios, setScenarios] = useState([]);
   const [byNetwork, setByNetwork] = useState(null);
   const [byLiteracy, setByLiteracy] = useState(null);
+  const [selectedScenarios, setSelectedScenarios] = useState([]);
+  const [comparison, setComparison] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -41,6 +43,31 @@ function Dashboard() {
     }
   };
 
+  const toggleScenario = (scenario) => {
+    if (selectedScenarios.includes(scenario)) {
+      setSelectedScenarios(selectedScenarios.filter(s => s !== scenario));
+    } else if (selectedScenarios.length < 2) {
+      setSelectedScenarios([...selectedScenarios, scenario]);
+    } else {
+      setSelectedScenarios([selectedScenarios[1], scenario]);
+    }
+  };
+
+  const compareScenarios = async () => {
+    if (selectedScenarios.length !== 2) return;
+    
+    try {
+      const [scenarioA, scenarioB] = selectedScenarios;
+      const res = await fetch(
+        `http://localhost:3000/insights/compare?scenarioA=${scenarioA}&scenarioB=${scenarioB}`
+      );
+      const data = await res.json();
+      setComparison(data);
+    } catch (err) {
+      console.error('Failed to compare scenarios:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="dashboard-loading">
@@ -63,14 +90,14 @@ function Dashboard() {
     );
   }
 
-  if (!summary || summary.totalMerchants === 0) {
+  if (!summary || (summary.totalMerchants === 0 && !scenarios.length)) {
     return (
       <div className="dashboard-empty">
         <div className="empty-icon">📊</div>
         <h3>No Simulation Data</h3>
         <p>Run a simulation to see insights and metrics</p>
         <div className="empty-hint">
-          <code>cd scenario-runner && npm start</code>
+          <p>Start a simulation from the Simulation Console</p>
         </div>
       </div>
     );
@@ -126,18 +153,43 @@ function Dashboard() {
         />
       </div>
 
-      {/* Scenarios Overview */}
+      {/* Scenarios Overview & Comparison */}
       {scenarios.length > 0 && (
         <div className="dashboard-section">
-          <h3>Active Scenarios</h3>
+          <h3>Scenario Comparison</h3>
+          <p className="section-desc">Select two scenarios to compare performance</p>
           <div className="scenarios-list">
             {scenarios.map(scenario => (
-              <div key={scenario} className="scenario-badge">
-                <span className="scenario-icon">🎬</span>
+              <button
+                key={scenario}
+                className={`scenario-chip ${selectedScenarios.includes(scenario) ? 'selected' : ''}`}
+                onClick={() => toggleScenario(scenario)}
+              >
+                <span className="chip-icon">
+                  {selectedScenarios.includes(scenario) ? '✓' : '○'}
+                </span>
                 <span className="scenario-name">{scenario}</span>
-              </div>
+              </button>
             ))}
           </div>
+          {selectedScenarios.length === 2 && (
+            <button className="compare-btn" onClick={compareScenarios}>
+              Compare Scenarios
+            </button>
+          )}
+          
+          {comparison && !comparison.error && (
+            <div className="comparison-results">
+              <div className="comparison-grid">
+                <ComparisonCard scenario={comparison.scenarioA} label="Scenario A" />
+                <ComparisonCard scenario={comparison.scenarioB} label="Scenario B" />
+              </div>
+              <div className="recommendation">
+                <strong>Recommended:</strong> {comparison.recommendation.recommendedScenario}
+                <span className="confidence">{comparison.recommendation.confidence}</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -225,3 +277,28 @@ function BreakdownCard({ title, data, icon }) {
 }
 
 export default Dashboard;
+
+function ComparisonCard({ scenario, label }) {
+  return (
+    <div className="comparison-card">
+      <div className="comparison-header">
+        <span className="comparison-label">{label}</span>
+        <span className="comparison-id">{scenario.id}</span>
+      </div>
+      <div className="comparison-stats">
+        <div className="stat-row">
+          <span>Success Rate:</span>
+          <span>{scenario.successRatePercent}</span>
+        </div>
+        <div className="stat-row">
+          <span>Avg Time:</span>
+          <span>{scenario.averageCompletionTimeSec}s</span>
+        </div>
+        <div className="stat-row">
+          <span>Experience:</span>
+          <span>{scenario.experienceScore.toFixed(2)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}

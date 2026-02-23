@@ -1,0 +1,74 @@
+.live-insights {
+  padding: 2rem;
+  background: #0f172a;
+  min-height: 100vh;
+}
+
+.insights-header {
+  margin-bottom: 2rem;
+}
+
+.insights-header h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  color: #f1f5f9;
+}
+
+.insights-header p {
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.insights-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  margin-top: 1.5rem;
+}
+
+.insights-loading,
+.insights-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  text-align: center;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  margin: 2rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.insights-empty h3 {
+  color: #f1f5f9;
+  margin-bottom: 0.5rem;
+}
+
+.insights-empty p {
+  color: #94a3b8;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #334155;
+  border-top-color: #a78bfa;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+}

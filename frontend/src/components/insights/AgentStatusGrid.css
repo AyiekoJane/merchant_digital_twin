@@ -1,0 +1,53 @@
+.agent-status-grid {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.agent-status-grid h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #f1f5f9;
+}
+
+.status-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.status-card {
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 2px solid;
+}
+
+.status-card.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+}
+
+.status-card.completed {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+}
+
+.status-card.failed {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+}
+
+.status-count {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #f1f5f9;
+}
+
+.status-label {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}

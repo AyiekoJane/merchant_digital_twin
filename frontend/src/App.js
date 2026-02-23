@@ -1,91 +1,79 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import Dashboard from './components/Dashboard';
-import ScenarioManager from './components/ScenarioManager';
-import MerchantViewer from './components/MerchantViewer';
-import SimulationRunner from './components/SimulationRunner';
-import ChannelSimulation from './components/ChannelSimulation';
+import SimulationConsole from './components/SimulationConsole';
+import LiveInsights from './components/LiveInsights';
 import ScenarioTesting from './components/ScenarioTesting';
+import Settings from './components/Settings';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [services, setServices] = useState({
-    backend: 'checking'
-  });
+  const [backendStatus, setBackendStatus] = useState('checking');
 
   useEffect(() => {
-    const checkServices = async () => {
+    const checkBackend = async () => {
       try {
-        const backendRes = await fetch('http://localhost:3000/health');
-        const backendData = await backendRes.json();
-        setServices({ backend: backendData.status === 'healthy' ? 'online' : 'offline' });
+        const res = await fetch('http://localhost:3000/health');
+        const data = await res.json();
+        setBackendStatus(data.status === 'healthy' ? 'online' : 'offline');
       } catch {
-        setServices({ backend: 'offline' });
+        setBackendStatus('offline');
       }
     };
 
-    checkServices();
-    const interval = setInterval(checkServices, 30000);
+    checkBackend();
+    const interval = setInterval(checkBackend, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊', desc: 'Real-time insights & metrics' },
-    { id: 'channel', label: 'Channel Simulation', icon: '🌐', desc: 'Portal-based onboarding' },
-    { id: 'testing', label: 'Scenario Testing', icon: '🧪', desc: 'Experiment with flow changes' },
-    { id: 'scenarios', label: 'Scenarios', icon: '🎬', desc: 'Manage simulation scenarios' },
-    { id: 'merchants', label: 'Merchants', icon: '🏪', desc: 'View merchant profiles' },
-    { id: 'runner', label: 'Run Simulation', icon: '▶️', desc: 'Execute multi-scenario tests' }
+  const navigation = [
+    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { id: 'console', label: 'Simulation Console', icon: '🎯' },
+    { id: 'insights', label: 'Live Insights', icon: '📈' },
+    { id: 'testing', label: 'Scenario Testing', icon: '🧪' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
   return (
     <div className="app">
-      {/* Header */}
       <header className="app-header">
         <div className="header-brand">
           <div className="brand-icon">🎯</div>
           <div className="brand-text">
-            <h1>Digital Twin Simulation</h1>
-            <p>Scenario-Based Experimentation Engine v4.0</p>
+            <h1>Merchant Digital Twin</h1>
+            <p>Simulation Control Platform</p>
           </div>
         </div>
-
         <div className="header-status">
-          <StatusIndicator label="Backend API" status={services.backend} port="3000" />
+          <StatusIndicator status={backendStatus} />
         </div>
       </header>
 
-      {/* Navigation */}
       <nav className="app-nav">
-        {tabs.map(tab => (
+        {navigation.map(item => (
           <button
-            key={tab.id}
-            className={`nav-tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
+            key={item.id}
+            className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(item.id)}
           >
-            <span className="tab-icon">{tab.icon}</span>
-            <div className="tab-content">
-              <span className="tab-label">{tab.label}</span>
-              <span className="tab-desc">{tab.desc}</span>
-            </div>
+            <span className="nav-icon">{item.icon}</span>
+            <span className="nav-label">{item.label}</span>
           </button>
         ))}
       </nav>
 
-      {/* Main Content */}
       <main className="app-main">
         {activeTab === 'dashboard' && <Dashboard />}
-        {activeTab === 'channel' && <ChannelSimulation />}
+        {activeTab === 'console' && <SimulationConsole onNavigate={setActiveTab} />}
+        {activeTab === 'insights' && <LiveInsights />}
         {activeTab === 'testing' && <ScenarioTesting />}
-        {activeTab === 'scenarios' && <ScenarioManager />}
-        {activeTab === 'merchants' && <MerchantViewer />}
-        {activeTab === 'runner' && <SimulationRunner />}
+        {activeTab === 'settings' && <Settings />}
       </main>
     </div>
   );
 }
 
-function StatusIndicator({ label, status, port }) {
+function StatusIndicator({ status }) {
   const colors = {
     online: '#4ade80',
     offline: '#ef4444',
@@ -101,10 +89,9 @@ function StatusIndicator({ label, status, port }) {
           animation: status === 'checking' ? 'pulse 1.5s infinite' : 'none'
         }}
       />
-      <div className="status-text">
-        <span className="status-label">{label}</span>
-        <span className="status-port">:{port}</span>
-      </div>
+      <span className="status-label">
+        {status === 'online' ? 'Backend Online' : status === 'offline' ? 'Backend Offline' : 'Checking...'}
+      </span>
     </div>
   );
 }

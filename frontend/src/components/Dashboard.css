@@ -248,3 +248,143 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Scenario Comparison */
+.section-desc {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.scenarios-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.scenario-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid #334155;
+  border-radius: 8px;
+  background: #0d1117;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #e2e8f0;
+}
+
+.scenario-chip:hover {
+  border-color: #667eea;
+  background: #1e293b;
+}
+
+.scenario-chip.selected {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.2);
+  color: #a78bfa;
+}
+
+.chip-icon {
+  font-size: 1rem;
+}
+
+.compare-btn {
+  padding: 0.75rem 1.5rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.compare-btn:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.comparison-results {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #0d1117;
+  border: 1px solid #1e2730;
+  border-radius: 8px;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.comparison-card {
+  background: #161b22;
+  border: 1px solid #1e2730;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.comparison-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #1e2730;
+}
+
+.comparison-label {
+  font-weight: 600;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.comparison-id {
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.comparison-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comparison-stats .stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.comparison-stats .stat-row span:first-child {
+  color: #94a3b8;
+}
+
+.comparison-stats .stat-row span:last-child {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.recommendation {
+  padding: 1rem;
+  background: rgba(102, 126, 234, 0.15);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 8px;
+  text-align: center;
+  color: #e2e8f0;
+}
+
+.confidence {
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #667eea;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}

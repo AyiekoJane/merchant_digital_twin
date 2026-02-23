@@ -72,13 +72,24 @@ async function parseCsvFile(filePath) {
     const merchants = [];
     const errors = [];
     let rowNumber = 1;
+    let headerChecked = false;
+    const requiredColumns = ['merchant_id', 'income_level', 'digital_literacy', 'device_type', 
+                             'network_profile', 'patience_score', 'retry_threshold', 'issue_type'];
     
     if (!fs.existsSync(filePath)) {
-      return reject(new Error(`CSV file not found: ${filePath}`));
+      return reject(new Error(`File not found at path: ${filePath}`));
     }
     
     fs.createReadStream(filePath)
       .pipe(csv())
+      .on('headers', (headers) => {
+        // Check for required columns
+        const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+        if (missingColumns.length > 0) {
+          return reject(new Error(`Missing required columns: ${missingColumns.join(', ')}`));
+        }
+        headerChecked = true;
+      })
       .on('data', (row) => {
         rowNumber++;
         
@@ -95,14 +106,27 @@ async function parseCsvFile(filePath) {
         if (errors.length > 0) {
           console.error('Validation errors found:');
           errors.forEach(err => console.error(`  - ${err}`));
-          return reject(new Error(`CSV validation failed with ${errors.length} error(s)`));
+          
+          // Create a detailed error message
+          const errorSummary = errors.slice(0, 5).join('; ');
+          const additionalErrors = errors.length > 5 ? ` (and ${errors.length - 5} more)` : '';
+          
+          return reject(new Error(`CSV validation failed: ${errorSummary}${additionalErrors}`));
+        }
+        
+        if (merchants.length === 0) {
+          return reject(new Error('CSV file is empty or contains no valid merchant data'));
         }
         
         console.log(`✅ Successfully parsed ${merchants.length} merchants from CSV`);
         resolve(merchants);
       })
       .on('error', (error) => {
-        reject(new Error(`CSV parsing error: ${error.message}`));
+        if (error.message.includes('Invalid CSV')) {
+          reject(new Error('Invalid CSV format. Please ensure the file is properly formatted'));
+        } else {
+          reject(new Error(`CSV parsing error: ${error.message}`));
+        }
       });
   });
 }

@@ -1,0 +1,43 @@
+.simulation-console {
+  padding: 2rem;
+  background: #0f172a;
+  min-height: 100vh;
+}
+
+.console-header {
+  margin-bottom: 2rem;
+}
+
+.console-header h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  color: #f1f5f9;
+}
+
+.console-header p {
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.console-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+}
+
+.status-message {
+  grid-column: 1 / -1;
+  padding: 1rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+@media (max-width: 768px) {
+  .console-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,156 @@
+.csv-uploader {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.csv-uploader h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #f1f5f9;
+}
+
+.upload-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.file-upload-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.upload-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.prefilled-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-input-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 2px dashed #475569;
+  background: #0f172a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.file-input-label:hover {
+  border-color: #667eea;
+  background: #1e293b;
+}
+
+.file-input-label.uploading {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  cursor: wait;
+}
+
+.file-input-label.success {
+  border-color: #10b981;
+  border-style: solid;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.file-input-label.prefilled {
+  border-color: #3b82f6;
+  border-style: solid;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.file-input-label.error {
+  border-color: #ef4444;
+  border-style: solid;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.file-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.file-name {
+  font-size: 0.9rem;
+  color: #e2e8f0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-placeholder {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  flex: 1;
+}
+
+.upload-error {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #fca5a5;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.upload-error::before {
+  content: '⚠️';
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.upload-error strong {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.prefilled-info {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.prefilled-info::before {
+  content: 'ℹ️';
+  flex-shrink: 0;
+}
