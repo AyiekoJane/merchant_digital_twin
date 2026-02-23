@@ -52,3 +52,13 @@ coverage/
 
 # Debug
 .vscode-test/
+
+# Frontend build
+frontend/build/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# External repositories (not used)
+external/

@@ -7,6 +7,17 @@ const { parseCsvFile, getDefaultCsvPath } = require('./csvProcessor');
 const app = express();
 const PORT = 3001;
 
+// CORS middleware for frontend
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Configure multer for CSV file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

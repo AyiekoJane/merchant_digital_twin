@@ -2,330 +2,465 @@
 
 A data-driven simulation platform that spawns AI agents in Docker containers to simulate merchant behavior across multiple scenarios, enabling product teams to compare alternative flows before production rollout.
 
-## Current Version: 4.0 - Scenario-Based Experimentation Engine
+## Current Version: 6.0 - Channel-Based Onboarding Simulation
 
-### What's New in V4
+### What's New in V6
 
-- 🎬 **Scenario Engine** - Run simulations across multiple product flow variations
-- 📊 **Scenario Comparison** - Automatically compare BASELINE vs NEW FLOW outcomes
-- 🔄 **Multi-Scenario Orchestration** - Clone merchants across scenarios for fair comparison
-- 📈 **Comparative Analytics** - Success rate deltas, retry reduction, experience score improvements
-- 🎯 **Automated Recommendations** - AI-driven scenario selection based on performance
-- 📋 **CLI Comparison Reports** - Beautiful terminal reports comparing scenarios
+- 🌐 **Channel Abstraction Layer** - Support for Web, USSD, and Mobile App channels
+- 🤖 **Portal-Based Simulation** - Agents interact with real onboarding portals via browser automation
+- 🎭 **Playwright Integration** - Headless browser automation for realistic user journeys
+- 📊 **Enhanced Insights** - Page load times, validation errors, abandonment detection
+- 🧪 **Scenario Testing** - Experiment with hypothetical flow modifications
+- 📈 **Real-Time Dashboard** - Live event streaming and metric updates
+- 🔗 **CSV-Driven Simulation** - Upload merchant data and run portal-based tests
 
-## System Architecture
+---
 
-```
-Scenario Configurations (JSON)
-         ↓
-CSV Data → Merchant Generator (Port 3001)
-         ↓
-Scenario Runner (clones merchants per scenario)
-         ↓
-Simulation Orchestrator
-         ↓
-Docker Containers (AI Agents) × Scenarios
-         ↓
-Insight Service (Port 3000) ← Events tagged by scenario
-         ↓
-Scenario Comparison Engine
-         ↓
-CLI Comparison Report
-```
+## Table of Contents
 
-## Components
+1. [Quick Start](#quick-start)
+2. [Architecture](#architecture)
+3. [Installation](#installation)
+4. [Usage Guide](#usage-guide)
+5. [API Reference](#api-reference)
+6. [Frontend Dashboard](#frontend-dashboard)
+7. [CSV Data Format](#csv-data-format)
+8. [Scenario Configuration](#scenario-configuration)
+9. [Channel Simulation](#channel-simulation)
+10. [Troubleshooting](#troubleshooting)
+11. [Advanced Configuration](#advanced-configuration)
 
-1. **Scenario Runner** (NEW) - Orchestrates multi-scenario simulations
-2. **Scenario Configurations** (NEW) - JSON files defining flow variations
-3. **Insight Service** - Collects events, calculates metrics per scenario, provides comparison API
-4. **Merchant Generator** - CSV-driven merchant profile generator with REST API
-5. **Simulation Orchestrator** - Spawns Docker containers for each merchant
-6. **AI Agent** - Simulates merchant behavior with scenario-specific adjustments
-7. **CLI Comparison Tool** (NEW) - Compares scenarios and provides recommendations
-
-## Prerequisites
-
-- Node.js 18+ (LTS)
-- Docker Desktop installed and running
-- npm or yarn
+---
 
 ## Quick Start
 
-### 1. Install Dependencies
+### Prerequisites
+
+- Docker installed
+- Node.js 18+ installed
+- 4GB RAM minimum
+- Internet connection
+
+### Installation
 
 ```bash
-# Install all services
-cd insight-service && npm install && cd ..
-cd merchant-generator && npm install && cd ..
-cd simulation-orchestrator && npm install && cd ..
-cd simulation-agent && npm install && cd ..
-cd scenario-runner && npm install && cd ..
-cd cli && npm install && cd ..
+# Install backend dependencies
+cd backend && npm install
+
+# Install frontend dependencies
+cd ../frontend && npm install
+
+# Install agent dependencies
+cd ../simulation-agent && npm install
+
+# Build Docker image with Playwright
+cd simulation-agent
+docker build -t simulation-agent:latest .
 ```
 
-### 2. Build Docker Image
+### Start Services
+
+```bash
+# Terminal 1: Start backend
+cd backend && npm start
+
+# Terminal 2: Start frontend
+cd frontend && npm start
+```
+
+### Access Application
+
+- Frontend UI: http://localhost:3001
+- Backend API: http://localhost:3000
+- API Health: http://localhost:3000/health
+
+### Run Your First Simulation
+
+1. Open http://localhost:3001
+2. Navigate to "Channel Simulation" tab
+3. Upload merchant CSV (`data/merchants.csv`)
+4. Select "Web Portal" channel
+5. Enter portal URL (default: https://m-pesaforbusiness.co.ke/apply)
+6. Set merchant count to 3
+7. Click "RUN SIMULATION"
+8. Watch live events and insights
+
+---
+
+## Architecture
+
+### System Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Frontend (React)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  Dashboard  │  Channel Sim  │  Scenario Test  │  Merchants      │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Unified Backend (Express)                     │
+├─────────────────────────────────────────────────────────────────┤
+│  • CSV Processing          • Channel Management                  │
+│  • Merchant Management     • Simulation Orchestration            │
+│  • Insight Collection      • Scenario Comparison                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  AI Agent Containers (Docker)                    │
+├─────────────────────────────────────────────────────────────────┤
+│  Channel Factory → Web/USSD/App → Portal → Insights             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Components
+
+1. **Unified Backend (Port 3000)** - Single Express server combining:
+   - Merchant Generator (CSV processing, uploads)
+   - Insight Service (event storage, metrics)
+   - Scenario Runner (in-process simulations)
+   - Channel Simulation Orchestration
+   - Comparison Engine
+
+2. **React Frontend (Port 3001)** - Web dashboard for visualization and control:
+   - Real-time Dashboard
+   - Channel Simulation Console
+   - Scenario Testing UI
+   - Merchant Viewer
+   - Simulation Runner
+
+3. **AI Agent Containers (Docker)** - Containerized agents with:
+   - Channel abstraction layer
+   - Playwright browser automation
+   - Real portal interaction
+   - Insight collection
+
+### Channel Abstraction Layer
+
+**Location:** `simulation-agent/channels/`
+
+**Components:**
+
+1. **Base Channel** (`base.js`) - Abstract interface all channels implement
+2. **Web Channel** (`web.js`) - Playwright-based browser automation
+3. **USSD Channel** (`ussd.js`) - Placeholder for future implementation
+4. **App Channel** (`app.js`) - Placeholder for future implementation
+5. **Channel Factory** (`index.js`) - Creates and manages channel instances
+
+### Supported Channels
+
+| Channel | Status | Technology | Description |
+|---------|--------|------------|-------------|
+| WEB | ✅ Implemented | Playwright | Headless browser automation |
+| USSD | 🚧 Placeholder | TBD | USSD session simulation |
+| APP | 🚧 Placeholder | Appium | Mobile app automation |
+
+---
+
+## Installation
+
+### Step 1: Install Dependencies
+
+```bash
+# Backend
+cd backend
+npm install
+
+# Frontend
+cd ../frontend
+npm install
+
+# Agent
+cd ../simulation-agent
+npm install
+```
+
+### Step 2: Build Docker Image
 
 ```bash
 cd simulation-agent
 docker build -t simulation-agent:latest .
 ```
 
-Verify:
-```bash
-docker images | findstr simulation-agent
-```
-
-### 3. Start Services
-
-**Terminal 1 - Insight Service:**
-```bash
-cd insight-service
-npm start
-```
-
-Wait for:
-```
-🧠 Insight Service - Digital Twin Intelligence Layer
-Server running on http://localhost:3000
-```
-
-**Terminal 2 - Merchant Generator:**
-```bash
-cd merchant-generator
-npm start
-```
-
-Wait for:
-```
-🚀 Merchant Generator V2 - CSV-Driven
-Server running on http://localhost:3001
-✅ Loaded 8 merchants into cache
-```
-
-**Terminal 3 - Run Multi-Scenario Simulation:**
-```bash
-cd scenario-runner
-npm start
-```
-
 This will:
-- Load all scenario configurations from `/scenarios`
-- Fetch merchants from generator
-- Clone merchants for each scenario
-- Spawn Docker containers for each merchant × scenario combination
-- Send events tagged with scenario IDs to insight service
+- Install Playwright
+- Download Chromium browser
+- Package agent code
+- Create channel implementations
 
-**Terminal 4 - Compare Scenarios:**
+**Note:** First build takes 5-10 minutes due to browser download.
+
+### Step 3: Verify Installation
+
 ```bash
-cd cli
-npm run compare
+# Check Docker image
+docker images | grep simulation-agent
+
+# Start backend
+cd backend && npm start
+
+# Start frontend (in new terminal)
+cd frontend && npm start
+
+# Check health
+curl http://localhost:3000/health
 ```
 
-Or compare specific scenarios:
+---
+
+## Usage Guide
+
+### Channel-Based Simulation
+
+#### Step 1: Prepare CSV Data
+
+Create merchant CSV with required fields:
+
+```csv
+merchantId,businessType,incomeLevel,deviceType,networkProfile,digitalLiteracy
+M001,retail,medium,android_mid,3G_POOR,intermediate
+M002,services,high,ios,4G_GOOD,advanced
+M003,agriculture,low,android_low,2G_EDGE,basic
+```
+
+#### Step 2: Upload CSV
+
+1. Navigate to "Channel Simulation" tab
+2. Click "Choose CSV file" under "Merchant Onboarding Data"
+3. Select your CSV file
+4. Wait for success message: `✅ Uploaded X merchants loaded`
+
+#### Step 3: Configure Simulation
+
+**Channel Selection:**
+- Select "Web Portal" (currently only available)
+- USSD and App channels coming soon
+
+**Portal URL:**
+- Default: `https://m-pesaforbusiness.co.ke/apply`
+- Or enter custom onboarding portal URL
+
+**Simulation Controls:**
+- Number of merchants: 1-100
+- Simulation speed: Normal or Accelerated
+- Network variability: Enable/disable
+
+#### Step 4: Run Simulation
+
+1. Click "▶️ RUN SIMULATION"
+2. Monitor live event log
+3. View real-time insights dashboard
+4. Check completion rates and metrics
+
+#### Step 5: Analyze Results
+
+**Real-Time Insights Panel:**
+- Active Agents count
+- Completion Rate percentage
+- Average Duration
+- Drop-offs count
+
+**Dashboard Tab:**
+- Completion rate trends
+- Network impact analysis
+- Digital literacy correlation
+- Drop-off heatmaps
+
+### Scenario Testing
+
+**Navigate to "Scenario Testing" tab:**
+
+1. **Select Baseline** - Choose existing scenario
+2. **Add Modifications** - Click buttons to add changes:
+   - ➖ Remove Step
+   - ✅ Add Verification
+   - 🔄 Reorder Steps
+   - 📝 Add Required Field
+   - ✨ Simplify Form
+   - 💡 Add Help Text
+3. **Run Comparison** - Click "RUN COMPARISON"
+4. **Review Results** - Compare metrics:
+   - Completion rate delta
+   - Time change
+   - Drop-off shift
+   - Friction score change
+
+### Legacy Scenario Runner
+
 ```bash
-npm run compare BASELINE SIMPLIFIED_FLOW
+# Start services
+cd backend && npm start  # Terminal 1
+cd frontend && npm start  # Terminal 2
+
+# Access frontend
+# Navigate to "Run Simulation" tab
+# Click "Run All Scenarios"
 ```
 
-## Expected Output
+---
 
-### Scenario Runner Console
+## API Reference
 
+### Base URL
 ```
-🎯 Digital Twin Scenario Experimentation Engine
-📊 Multi-Scenario Simulation Runner
-══════════════════════════════════════════════════════════════════
-
-📋 Loading scenario configurations...
-📋 Loaded 3 scenario configurations:
-   - BASELINE: Current production flow
-   - SIMPLIFIED_FLOW: Reduced verification steps
-   - ENHANCED_SUPPORT: Enhanced user support
-
-📡 Fetching merchant profiles...
-✅ Loaded 8 merchant profiles
-
-🔄 Starting multi-scenario simulations...
-   Total simulations: 8 merchants × 3 scenarios = 24 agents
-
-══════════════════════════════════════════════════════════════════
-🎬 Running Scenario: BASELINE
-   Current production flow - existing user journey
-   Latency Multiplier: 1x
-   Retry Bonus: +0
-   Success Bonus: +0%
-══════════════════════════════════════════════════════════════════
-
-🚀 Spawning 8 agents for BASELINE...
-   ✓ M001 completed
-   ✓ M002 completed
-   ...
-
-✅ Scenario BASELINE completed:
-   Agents spawned: 8
-   Successful: 8
-   Failed: 0
+http://localhost:3000
 ```
 
-### CLI Comparison Report Example
+### Channel Management
 
-```
-═══════════════════════════════════════════════════════════════════
-  SCENARIO COMPARISON REPORT
-═══════════════════════════════════════════════════════════════════
-  Generated: 2/18/2026, 10:30:45 AM
-
-───────────────────────────────────────────────────────────────────
-  SCENARIO OVERVIEW
-───────────────────────────────────────────────────────────────────
-
-  📋 Scenario A: BASELINE
-     Merchants: 8
-     Success Rate: 75.0%
-     Avg Retries: 2.1
-     Avg Time: 4.5s
-     Experience Score: 0.58
-
-  📋 Scenario B: SIMPLIFIED_FLOW
-     Merchants: 8
-     Success Rate: 87.5%
-     Avg Retries: 1.6
-     Avg Time: 3.6s
-     Experience Score: 0.73
-
-───────────────────────────────────────────────────────────────────
-  PERFORMANCE COMPARISON
-───────────────────────────────────────────────────────────────────
-
-  Success Rate:
-     📈 +12.5% (SIMPLIFIED_FLOW vs BASELINE)
-
-  Retry Attempts:
-     ✅ Reduced by 0.5 attempts (23.8%)
-
-  Completion Time:
-     ⚡ Faster by 0.9s
-
-  Experience Score:
-     🟢 +0.15 points
-
-───────────────────────────────────────────────────────────────────
-  RECOMMENDATION
-───────────────────────────────────────────────────────────────────
-
-  🎯 Recommended Scenario: SIMPLIFIED_FLOW
-     Reason: Higher experience score (+0.15)
-     Confidence: MEDIUM (sample size: 8)
-
-───────────────────────────────────────────────────────────────────
-  ACTIONABLE INSIGHTS
-───────────────────────────────────────────────────────────────────
-
-  ✅ SIMPLIFIED_FLOW shows better performance
-     → Success rate improved significantly (+12.5%)
-     → Consider rolling out SIMPLIFIED_FLOW to production
-
-  💡 Next Steps:
-     1. Review SIMPLIFIED_FLOW implementation details
-     2. Run A/B test with real users (10-20% traffic)
-     3. Monitor production metrics closely
-     4. Gradual rollout if metrics hold
-
-═══════════════════════════════════════════════════════════════════
+**Get Available Channels**
+```http
+GET /channels
 ```
 
-```
-═══════════════════════════════════════════════════════════════════
-  DIGITAL TWIN SIMULATION REPORT
-═══════════════════════════════════════════════════════════════════
-  Generated: 2/18/2026, 10:30:45 AM
-
-───────────────────────────────────────────────────────────────────
-  OVERALL METRICS
-───────────────────────────────────────────────────────────────────
-
-  Total Merchants Simulated:    8
-  Success Rate:                 87.5% (7 succeeded)
-  Average Completion Time:      4.2s (4200ms)
-  Average Retry Attempts:       1.8
-  Overall Experience Score:     0.68 / 1.0
-  
-  🟡 Experience Assessment: Good - Minor friction points exist
-
-───────────────────────────────────────────────────────────────────
-  FAILURES BY NETWORK PROFILE
-───────────────────────────────────────────────────────────────────
-
-  2G_EDGE          25.0% ████████████
-                   Avg Time: 6.5s | Attempts: 2.5
-
-  3G_POOR          16.7% ████████
-                   Avg Time: 4.8s | Attempts: 2.0
-
-  4G_GOOD           0.0% 
-                   Avg Time: 2.1s | Attempts: 1.0
-
-───────────────────────────────────────────────────────────────────
-  RECOMMENDATIONS
-───────────────────────────────────────────────────────────────────
-
-  📡 Network: 2G_EDGE has 25.0% failure rate
-     → Consider optimizing for low-bandwidth scenarios
-     → Implement better retry mechanisms for poor networks
-
-  📚 Digital Literacy: basic users struggle (33.3% failure)
-     → Simplify UI/UX for less tech-savvy users
-     → Add more guidance and help text
+Response:
+```json
+{
+  "channels": [
+    { "id": "WEB", "name": "Web Portal", "enabled": true },
+    { "id": "USSD", "name": "USSD", "enabled": false },
+    { "id": "APP", "name": "Mobile App", "enabled": false }
+  ]
+}
 ```
 
-## API Endpoints
+**Run Channel Simulation**
+```http
+POST /simulate/channel
+Content-Type: application/json
 
-### Insight Service (Port 3000)
+{
+  "merchantCount": 10,
+  "channel": "WEB",
+  "portalUrl": "https://m-pesaforbusiness.co.ke/apply",
+  "simulationSpeed": "normal",
+  "networkVariability": true
+}
+```
+
+### Merchant Management
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/simulation-event` | Receive events from agents |
+| GET | `/merchants` | Get all merchant profiles from CSV |
+| POST | `/merchants/upload` | Upload new CSV file |
+| GET | `/health` | Health check |
+
+### Insights & Metrics
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/events` | Receive simulation events |
+| POST | `/simulation-event` | Receive agent events (alias) |
 | GET | `/insights/summary` | Overall aggregated metrics |
 | GET | `/insights/scenario/:id` | Metrics for specific scenario |
 | GET | `/insights/compare?scenarioA=X&scenarioB=Y` | Compare two scenarios |
 | GET | `/insights/scenarios` | List all available scenarios |
 | GET | `/insights/by-network` | Breakdown by network profile |
 | GET | `/insights/by-literacy` | Breakdown by digital literacy |
-| GET | `/insights/by-scenario` | Breakdown by issue type |
 | DELETE | `/insights/clear` | Clear all stored events |
-| GET | `/health` | Health check |
 
-### Example: Compare Scenarios
+### Scenario Management
 
-```bash
-curl "http://localhost:3000/insights/compare?scenarioA=BASELINE&scenarioB=SIMPLIFIED_FLOW"
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/scenarios` | List all scenario configurations |
+| GET | `/scenarios/list` | List scenario configs (alias) |
+| POST | `/run-scenarios` | Run multi-scenario simulation |
 
-Response:
+### Insight Event Structure
+
 ```json
 {
-  "scenarioA": {
-    "id": "BASELINE",
-    "successRate": 0.75,
-    "experienceScore": 0.58
-  },
-  "scenarioB": {
-    "id": "SIMPLIFIED_FLOW",
-    "successRate": 0.88,
-    "experienceScore": 0.73
-  },
-  "comparison": {
-    "successRateImprovement": 0.13,
-    "experienceScoreDelta": 0.15
-  },
-  "recommendation": {
-    "recommendedScenario": "SIMPLIFIED_FLOW",
-    "reason": "Higher experience score (+0.15)",
-    "confidence": "MEDIUM"
-  }
+  "merchantId": "M001",
+  "scenarioId": "channel-sim-123",
+  "event": "VALIDATION_ERROR",
+  "field": "businessName",
+  "retryNeeded": true,
+  "timestamp": 1234567890,
+  "channel": "WebChannel"
 }
 ```
 
+### Event Types
+
+| Event | Description | When Collected |
+|-------|-------------|----------------|
+| PAGE_LOAD | Portal page loaded | On navigation |
+| PAGE_LOAD_FAILED | Page failed to load | Load timeout/error |
+| FIELD_FILLED | Form field completed | After field input |
+| FIELD_FILL_FAILED | Field input failed | Validation error |
+| VALIDATION_ERROR | Form validation failed | On submit attempt |
+| DOCUMENT_UPLOAD_CONFUSION | User confused by upload | Low literacy + delay |
+| ONBOARDING_COMPLETE | Journey completed | Successful submission |
+| ONBOARDING_FAILED | Journey abandoned | Max retries exceeded |
+| ONBOARDING_SUMMARY | Final metrics | End of journey |
+
+---
+
+## Frontend Dashboard
+
+### Features
+
+- 📊 **Real-time Dashboard** - Live metrics, network/literacy breakdowns, experience scores
+- 🌐 **Channel Simulation** - CSV upload, channel selection, portal configuration, real-time insights
+- 🧪 **Scenario Testing** - Experiment with hypothetical flow modifications
+- 🎬 **Scenario Manager** - View, compare, and analyze scenario performance
+- 🏪 **Merchant Viewer** - Browse CSV-driven merchant profiles
+- ▶️ **Simulation Runner** - Execute multi-scenario tests from the UI
+
+### Access
+
+Frontend runs on Port 3001 and automatically connects to backend on Port 3000.
+
+URL: http://localhost:3001
+
+### Navigation
+
+1. **Dashboard** - View real-time simulation metrics
+2. **Channel Simulation** - Run portal-based simulations
+3. **Scenario Testing** - Test hypothetical flow changes
+4. **Scenarios** - Compare scenario performance
+5. **Merchants** - Browse merchant profiles
+6. **Run Simulation** - Execute multi-scenario tests
+
+---
+
 ## CSV Data Format
+
+### Required Columns
+
+| Column | Type | Valid Values |
+|--------|------|--------------|
+| merchantId | string | Any unique ID |
+| businessType | enum | retail, services, agriculture |
+| incomeLevel | enum | low, medium, high |
+| deviceType | enum | ios, android_high, android_mid, android_low |
+| networkProfile | enum | 4G_GOOD, 4G_UNSTABLE, 3G_POOR, 2G_EDGE |
+| digitalLiteracy | enum | basic, intermediate, advanced |
+| patienceScore | float | 0.0 - 1.0 (optional) |
+| retryThreshold | integer | 1 - 10 (optional) |
+| issueType | enum | pin_reset, balance_check, etc. (optional) |
+
+### Sample CSV
+
+```csv
+merchantId,businessType,incomeLevel,deviceType,networkProfile,digitalLiteracy
+M001,retail,medium,android_mid,3G_POOR,intermediate
+M002,services,high,ios,4G_GOOD,advanced
+M003,agriculture,low,android_low,2G_EDGE,basic
+```
+
+### Sample Datasets
+
+- `data/merchants.csv` - Default (8 merchants)
+- `data/merchants_large.csv` - Large dataset (15 merchants)
+- `data/merchants_high_income.csv` - High-income only (5 merchants)
+- `data/merchants_low_income.csv` - Low-income only (5 merchants)
+
+---
 
 ## Scenario Configuration
 
@@ -356,7 +491,7 @@ Scenarios are defined as JSON files in the `/scenarios` directory.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| scenarioId | string | Unique identifier (e.g., "BASELINE", "SIMPLIFIED_FLOW") |
+| scenarioId | string | Unique identifier |
 | description | string | Human-readable description |
 | latencyMultiplier | float | Network latency multiplier (0.8 = 20% faster) |
 | retryBonus | integer | Additional retry attempts allowed |
@@ -368,60 +503,215 @@ Scenarios are defined as JSON files in the `/scenarios` directory.
 2. **SIMPLIFIED_FLOW** - Streamlined UX with fewer steps
 3. **ENHANCED_SUPPORT** - Additional user guidance and help
 
-### Creating Custom Scenarios
+---
 
-1. Create a new JSON file in `/scenarios`
-2. Define scenario parameters
-3. Run scenario-runner
-4. Compare results with CLI tool
+## Channel Simulation
 
-Example:
+### Web Channel Features
+
+- Headless browser automation using Playwright
+- Device-specific viewport simulation
+- Network latency simulation
+- Digital literacy-based interaction delays
+- Real-time insight collection
+- Form validation error handling
+- Abandonment detection
+
+### Merchant Profile Requirements
+
+```json
+{
+  "merchantId": "M001",
+  "channel": "WEB",
+  "portalUrl": "https://m-pesaforbusiness.co.ke/apply",
+  "deviceType": "android_mid",
+  "networkProfile": "3G_POOR",
+  "digitalLiteracy": "intermediate",
+  "businessType": "retail",
+  "incomeLevel": "medium"
+}
+```
+
+### Collected Insights
+
+#### Operational Metrics
+- Onboarding completion rate
+- Time to completion
+- Drop-off step index
+- Retry count
+- Validation error frequency
+
+#### Experience Metrics
+- Friction score (0-1)
+- Cognitive load proxy
+- Abandonment probability
+- Step confusion index
+
+#### Technical Metrics
+- Network latency (ms)
+- Page load time (ms)
+- Field fill duration (ms)
+- API response time (ms)
+
+### Example Agent Output
+
+```
+🤖 Agent V2 started for merchant: M001
+📱 Device: android_mid | 📡 Network: 3G_POOR
+🎯 Channel: WEB | 🔗 Portal: https://m-pesaforbusiness.co.ke/apply
+
+🌐 Initializing Web Channel...
+✅ Browser initialized (android_mid)
+
+🚀 Starting onboarding for M001
+  ✓ Portal loaded (1234ms)
+  📝 Filling business information...
+  ✓ Business info filled
+  📞 Filling contact information...
+  ✓ Contact info filled
+  📄 Handling documentation...
+  ✓ Documentation handled
+  📤 Submitting application...
+  ✓ Application submitted
+
+✅ Onboarding completed in 45678ms
+🧹 Browser closed
+```
+
+---
+
+## Troubleshooting
+
+### Docker Issues
+
+**Issue: Docker image not found**
 ```bash
-# Create new scenario
-echo '{
-  "scenarioId": "FAST_TRACK",
-  "description": "Express checkout for verified users",
-  "latencyMultiplier": 0.6,
-  "retryBonus": 0,
-  "successProbabilityBonus": 0.25
-}' > scenarios/fast-track.json
-
-# Run simulation
-cd scenario-runner && npm start
-
-# Compare
-cd cli && npm run compare BASELINE FAST_TRACK
+cd simulation-agent
+docker build -t simulation-agent:latest .
 ```
 
-### Required Columns
+**Issue: Playwright browser not installed**
+- Rebuild Docker image (Dockerfile includes browser installation)
 
-| Column | Type | Valid Values |
-|--------|------|--------------|
-| merchant_id | string | Any unique ID |
-| income_level | enum | low, medium, high |
-| digital_literacy | enum | basic, intermediate, advanced |
-| device_type | enum | android_low_end, android_mid, ios, feature_phone |
-| network_profile | enum | 4G_GOOD, 4G_UNSTABLE, 3G_POOR, 2G_EDGE |
-| patience_score | float | 0.0 - 1.0 |
-| retry_threshold | integer | 1 - 10 |
-| issue_type | enum | pin_reset, balance_check, transaction_failure, kyc_update, statement_request |
-
-### Sample CSV
-
-```csv
-merchant_id,income_level,digital_literacy,device_type,network_profile,patience_score,retry_threshold,issue_type
-M001,low,basic,android_low_end,3G_POOR,0.3,3,pin_reset
-M002,medium,intermediate,android_mid,4G_GOOD,0.7,2,statement_request
-M003,high,advanced,ios,4G_GOOD,0.8,1,balance_check
+**Issue: Container fails immediately**
+```bash
+docker ps -a  # List all containers
+docker logs <container-id>  # Check logs
 ```
 
-Sample datasets provided:
-- `data/merchants.csv` - Default (8 merchants)
-- `data/merchants_large.csv` - Large dataset (15 merchants)
-- `data/merchants_high_income.csv` - High-income only (5 merchants)
-- `data/merchants_low_income.csv` - Low-income only (5 merchants)
+### Backend Issues
 
-## Experience Score Formula
+**Issue: Port 3000 already in use**
+```bash
+# Find and kill process
+lsof -ti:3000 | xargs kill -9
+
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+```
+
+**Issue: No merchants loaded**
+1. Check `data/merchants.csv` exists
+2. Verify CSV format
+3. Re-upload via frontend
+
+**Issue: Backend offline**
+```bash
+# Check health
+curl http://localhost:3000/health
+
+# Restart
+cd backend && npm start
+```
+
+### Simulation Issues
+
+**Issue: Simulation not starting**
+1. Verify CSV uploaded
+2. Check Docker is running: `docker ps`
+3. Verify image exists: `docker images | grep simulation-agent`
+4. Check backend logs
+
+**Issue: No insights appearing**
+1. Verify backend running on port 3000
+2. Check INSIGHT_SERVICE_URL environment variable
+3. Review agent logs: `docker logs <container-id>`
+
+**Issue: Cannot reach portal URL**
+- Check network connectivity
+- Verify portal URL is accessible
+- Check firewall settings
+
+### Performance Issues
+
+**Issue: Slow simulation**
+- Use "Accelerated" mode for faster execution
+- Reduce merchant count for testing
+- Check system resources (CPU, RAM)
+
+**Issue: High resource usage**
+- Limit concurrent agents (max 3 in accelerated mode)
+- Close unused applications
+- Increase Docker resource limits
+
+---
+
+## Advanced Configuration
+
+### Network Simulation
+
+**Network Profiles:**
+
+| Profile | Base Latency | Variability | Use Case |
+|---------|--------------|-------------|----------|
+| 4G_GOOD | 100ms | ±20% | Urban areas, good coverage |
+| 4G_UNSTABLE | 300ms | ±20% | Congested networks |
+| 3G_POOR | 800ms | ±20% | Rural areas, weak signal |
+| 2G_EDGE | 1500ms | ±20% | Remote areas, fallback |
+
+### Digital Literacy Impact
+
+| Literacy Level | Typing Delay | Reading Delay | Form Interaction |
+|----------------|--------------|---------------|------------------|
+| Basic | 3000ms | 3000ms | 2000ms |
+| Intermediate | 1500ms | 2000ms | 1000ms |
+| Advanced | 800ms | 1000ms | 500ms |
+
+### Docker Configuration
+
+**Build Custom Image:**
+```bash
+cd simulation-agent
+docker build -t simulation-agent:latest .
+```
+
+**Run Single Agent:**
+```bash
+docker run --rm \
+  -e MERCHANT_PROFILE='{"merchantId":"M001","channel":"WEB",...}' \
+  -e INSIGHT_SERVICE_URL="http://host.docker.internal:3000" \
+  simulation-agent:latest
+```
+
+**Environment Variables:**
+- `MERCHANT_PROFILE` - JSON merchant profile
+- `INSIGHT_SERVICE_URL` - Backend URL for insights
+
+### Performance Tuning
+
+**Concurrent Simulations:**
+- Normal speed: 1 agent at a time
+- Accelerated: 3 agents concurrently
+- Adjust based on system resources
+
+**Resource Requirements:**
+- CPU: 2+ cores recommended
+- RAM: 4GB minimum, 8GB recommended
+- Disk: 2GB for Docker images
+- Network: Stable internet connection
+
+### Experience Score Formula
 
 ```
 experienceScore = 
@@ -436,110 +726,52 @@ experienceScore =
 - **0.3 - 0.5** 🟠 Fair - Significant issues to address
 - **0.0 - 0.3** 🔴 Poor - Critical problems
 
-## Testing Workflow
-
-### 1. Run Multi-Scenario Simulation
-
-```bash
-# Start services
-cd insight-service && npm start  # Terminal 1
-cd merchant-generator && npm start  # Terminal 2
-
-# Run all scenarios
-cd scenario-runner && npm start  # Terminal 3
-```
-
-### 2. Compare Scenarios
-
-```bash
-# Compare default (BASELINE vs first alternative)
-cd cli && npm run compare
-
-# Compare specific scenarios
-npm run compare BASELINE SIMPLIFIED_FLOW
-npm run compare SIMPLIFIED_FLOW ENHANCED_SUPPORT
-```
-
-### 3. View Scenario-Specific Insights
-
-```bash
-# Get metrics for specific scenario
-curl http://localhost:3000/insights/scenario/BASELINE
-curl http://localhost:3000/insights/scenario/SIMPLIFIED_FLOW
-
-# List all scenarios
-curl http://localhost:3000/insights/scenarios
-```
-
-### 4. Test with Different Merchant Datasets
-
-```bash
-# Upload different CSV
-curl -X POST -F "csvFile=@data/merchants_large.csv" http://localhost:3001/generate-merchants-from-csv
-
-# Run scenarios with new data
-cd scenario-runner && npm start
-
-# Compare results
-cd cli && npm run compare
-```
-
-## Development Mode
-
-Use nodemon for auto-reload during development:
-
-```bash
-# Insight service
-cd insight-service && npm run dev
-
-# Merchant generator
-cd merchant-generator && npm run dev
-
-# Orchestrator
-cd simulation-orchestrator && npm run dev
-```
-
-## Docker Compose (Alternative)
-
-Run services with Docker Compose:
-
-```bash
-docker-compose up
-```
-
-Then run orchestrator manually:
-```bash
-cd simulation-orchestrator
-set INSIGHT_SERVICE_URL=http://localhost:3000
-npm start
-```
+---
 
 ## Project Structure
 
 ```
 digital-twin-prototype/
 │
-├── scenarios/                    # NEW - Scenario configurations
+├── simulation-agent/
+│   ├── channels/
+│   │   ├── base.js          # Base channel interface
+│   │   ├── web.js           # Web portal channel (Playwright)
+│   │   ├── ussd.js          # USSD placeholder
+│   │   ├── app.js           # Mobile app placeholder
+│   │   └── index.js         # Channel factory
+│   ├── agent.js             # Original agent (legacy)
+│   ├── agent-v2.js          # Channel-based agent
+│   ├── package.json
+│   └── Dockerfile
+│
+├── backend/
+│   ├── modules/
+│   │   ├── channelSimulation.js  # Channel simulation orchestration
+│   │   ├── csvProcessor.js       # CSV parsing & validation
+│   │   ├── metrics.js            # Event storage & metrics
+│   │   ├── comparison.js         # Scenario comparison
+│   │   └── scenarioRunner.js     # In-process simulations
+│   ├── server.js
+│   └── package.json
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Dashboard.js
+│   │   │   ├── ChannelSimulation.js    # Channel simulation console
+│   │   │   ├── ScenarioTesting.js      # Scenario testing UI
+│   │   │   ├── ScenarioManager.js
+│   │   │   ├── MerchantViewer.js
+│   │   │   └── SimulationRunner.js
+│   │   ├── App.js
+│   │   └── index.js
+│   └── package.json
+│
+├── scenarios/
 │   ├── baseline.json
 │   ├── simplified-flow.json
 │   └── enhanced-support.json
-│
-├── scenario-runner/              # NEW - Multi-scenario orchestrator
-│   ├── index.js
-│   ├── Dockerfile
-│   └── package.json
-│
-├── insight-service/              # UPDATED - Scenario comparison
-│   ├── index.js
-│   ├── metrics.js
-│   ├── comparison.js            # NEW
-│   ├── Dockerfile
-│   └── package.json
-│
-├── cli/                          # UPDATED - Comparison tool
-│   ├── report.js
-│   ├── compare.js               # NEW
-│   └── package.json
 │
 ├── data/
 │   ├── merchants.csv
@@ -547,71 +779,34 @@ digital-twin-prototype/
 │   ├── merchants_high_income.csv
 │   └── merchants_low_income.csv
 │
-├── merchant-generator/
-│   ├── index.js
-│   ├── csvProcessor.js
-│   ├── Dockerfile
-│   └── package.json
-│
-├── simulation-orchestrator/
-│   ├── index.js
-│   └── package.json
-│
-├── simulation-agent/             # UPDATED - Scenario-aware
-│   ├── agent.js
-│   ├── Dockerfile
-│   └── package.json
-│
-├── docker-compose.yml            # UPDATED
-├── .gitignore
+├── start-all.bat
+├── start-all.sh
+├── start-backend.bat
+├── start-backend.sh
+├── start-frontend.bat
+├── start-frontend.sh
 └── README.md
 ```
 
-## Troubleshooting
-
-### Docker not running
-
-**Error:** "Cannot connect to Docker daemon"
-
-**Solution:**
-1. Open Docker Desktop
-2. Wait for it to fully start
-3. Verify: `docker ps`
-
-### Port already in use
-
-**Error:** "Port 3000 already in use"
-
-**Solution:**
-```bash
-# Windows
-netstat -ano | findstr :3000
-taskkill /PID <PID> /F
-```
-
-### Agents can't reach Insight Service
-
-**Error:** "Could not reach Insight Service"
-
-**Solution:**
-```bash
-# On Windows/Mac, use special hostname
-cd simulation-orchestrator
-set INSIGHT_SERVICE_URL=http://host.docker.internal:3000
-npm start
-```
-
-### No data in report
-
-**Error:** "No simulation data available yet"
-
-**Solution:**
-1. Ensure insight service is running
-2. Run simulation orchestrator
-3. Wait for agents to complete
-4. Then run report
+---
 
 ## Version History
+
+### Version 6.0 - Channel-Based Onboarding Simulation (Current)
+- Added channel abstraction layer (Web/USSD/App)
+- Implemented Web channel with Playwright browser automation
+- Created channel-based agent (agent-v2.js)
+- Added Channel Simulation Console frontend
+- Added Scenario Testing UI
+- Enhanced insight collection (page loads, validation errors, abandonment)
+- Real-time dashboard updates
+
+### Version 5.0 - Unified 2-Port Architecture
+- Consolidated all backend services into single Express server (Port 3000)
+- In-process simulation (no Docker required for legacy scenarios)
+- Simplified deployment and development
+- React frontend on Port 3001
+- Streamlined API endpoints
 
 ### Version 4.0 - Scenario-Based Experimentation Engine
 - Added Scenario Runner for multi-scenario orchestration
@@ -637,20 +832,72 @@ npm start
 - Docker-based agent simulation
 - Console log outputs
 
+---
+
 ## Future Enhancements
 
-- Persistent storage (PostgreSQL/MongoDB)
-- Real-time dashboard (React/Vue frontend)
-- WebSocket streaming of live events
-- Advanced ML-based experience prediction
-- Multi-region simulation support
-- Historical trend analysis
-- A/B testing simulation comparison
-- Real network throttling with tc/netem
+### Phase 2 (Next)
+- 🚧 USSD channel implementation
+- 🚧 Mobile app channel
+- 🚧 Screenshot capture on errors
+- 🚧 Video recording of sessions
+
+### Phase 3 (Future)
+- 📋 A/B testing automation
+- 📋 Multi-language support
+- 📋 Advanced analytics dashboard
+- 📋 ML-based predictions
+- 📋 Cloud deployment support
+- 📋 Persistent storage (PostgreSQL/MongoDB)
+- 📋 WebSocket streaming of live events
+- 📋 Export reports as PDF/CSV
+
+---
 
 ## License
 
 MIT - Prototype/Educational Use
+
+---
+
+## Support
+
+### Getting Help
+
+**Check Logs:**
+```bash
+# Backend logs
+cd backend && npm start  # Check terminal
+
+# Agent logs
+docker logs <container-id>
+
+# Frontend logs
+# Check browser console (F12)
+```
+
+**Verify Services:**
+```bash
+# Backend health
+curl http://localhost:3000/health
+
+# Available channels
+curl http://localhost:3000/channels
+
+# Current insights
+curl http://localhost:3000/insights/summary
+```
+
+### Success Checklist
+
+- ✅ Docker image built successfully
+- ✅ Backend running on port 3000
+- ✅ Frontend running on port 3001
+- ✅ CSV uploaded successfully
+- ✅ Simulation started
+- ✅ Live events appearing
+- ✅ Insights updating
+- ✅ Dashboard showing metrics
 
 ---
 

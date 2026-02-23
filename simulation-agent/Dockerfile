@@ -1,16 +1,21 @@
-FROM node:18-alpine
+FROM mcr.microsoft.com/playwright:v1.40.0-focal
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files
-COPY package.json ./
+COPY package*.json ./
 
-# Install dependencies (none for now, but good practice)
+# Install dependencies
 RUN npm install --production
 
-# Copy agent code
-COPY agent.js ./
+# Install Playwright browsers
+RUN npx playwright install chromium
 
-# Run the agent
-CMD ["node", "agent.js"]
+# Copy agent code and channels
+COPY agent.js ./
+COPY agent-v2.js ./
+COPY channels ./channels
+
+# Default to V2 agent (channel-based)
+CMD ["node", "agent-v2.js"]

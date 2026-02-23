@@ -15,6 +15,17 @@ const PORT = 3000;
 // Middleware
 app.use(express.json());
 
+// CORS middleware for frontend
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -46,6 +57,24 @@ app.post('/simulation-event', (req, res) => {
     // Log for debugging
     console.log(`📊 Event received: ${event.merchantId} - ${event.event}`);
     
+    res.status(201).json({
+      success: true,
+      message: 'Event stored successfully'
+    });
+  } catch (error) {
+    console.error('Error storing event:', error);
+    res.status(500).json({
+      error: 'Failed to store event',
+      message: error.message
+    });
+  }
+});
+
+// Alias endpoint for frontend compatibility
+app.post('/events', (req, res) => {
+  try {
+    const event = req.body;
+    storeEvent(event);
     res.status(201).json({
       success: true,
       message: 'Event stored successfully'
@@ -125,6 +154,33 @@ app.get('/insights/scenarios', (req, res) => {
     console.error('Error getting scenarios:', error);
     res.status(500).json({
       error: 'Failed to get scenarios',
+      message: error.message
+    });
+  }
+});
+
+// Endpoint: Get scenario configurations from files
+app.get('/scenarios', (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const scenariosDir = path.join(__dirname, '..', 'scenarios');
+    
+    if (!fs.existsSync(scenariosDir)) {
+      return res.json([]);
+    }
+    
+    const scenarioFiles = fs.readdirSync(scenariosDir).filter(f => f.endsWith('.json'));
+    const scenarios = scenarioFiles.map(file => {
+      const filePath = path.join(scenariosDir, file);
+      return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    });
+    
+    res.json(scenarios);
+  } catch (error) {
+    console.error('Error loading scenario files:', error);
+    res.status(500).json({
+      error: 'Failed to load scenario files',
       message: error.message
     });
   }
