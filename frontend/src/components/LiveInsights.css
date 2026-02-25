@@ -21,9 +21,28 @@
 
 .insights-grid {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   margin-top: 1.5rem;
+}
+
+.insights-left-col,
+.insights-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .insights-loading,
@@ -65,10 +84,4 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-@media (max-width: 768px) {
-  .insights-grid {
-    grid-template-columns: 1fr;
-  }
 }

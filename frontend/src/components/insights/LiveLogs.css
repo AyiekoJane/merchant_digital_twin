@@ -22,6 +22,40 @@
   margin: 0;
 }
 
+.logs-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.auto-scroll-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #495057;
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.auto-scroll-toggle:hover {
+  background: #e9ecef;
+}
+
+.auto-scroll-toggle input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.auto-scroll-toggle span {
+  font-weight: 500;
+}
+
 .live-indicator {
   display: flex;
   align-items: center;
@@ -120,6 +154,7 @@
   background: #fafafa;
   border-radius: 8px;
   padding: 12px;
+  scroll-behavior: smooth;
 }
 
 .log-entry {

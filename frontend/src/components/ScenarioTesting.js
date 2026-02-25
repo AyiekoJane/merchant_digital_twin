@@ -9,7 +9,9 @@ function ScenarioTesting() {
     modifications: []
   });
   const [comparisonResults, setComparisonResults] = useState(null);
+  const [aiPrediction, setAiPrediction] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isPredicting, setIsPredicting] = useState(false);
 
   useEffect(() => {
     fetchScenarios();
@@ -36,6 +38,9 @@ function ScenarioTesting() {
       ...prev,
       modifications: [...prev.modifications, modification]
     }));
+
+    // Auto-predict when modification is added
+    predictImpact(type);
   };
 
   const removeModification = (id) => {
@@ -52,9 +57,39 @@ function ScenarioTesting() {
       'reorder_steps': 'Reorder steps',
       'add_required_field': 'Add required field',
       'simplify_form': 'Simplify form fields',
-      'add_help_text': 'Add help text'
+      'add_help_text': 'Add help text',
+      'reduce_fields': 'Reduce required fields',
+      'improve_performance': 'Improve page load performance',
+      'simplify_ui': 'Simplify user interface'
     };
     return descriptions[type] || type;
+  };
+
+  const predictImpact = async (changeType) => {
+    setIsPredicting(true);
+    
+    try {
+      const response = await fetch('http://localhost:3000/scenario/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenarioChange: {
+            type: changeType,
+            description: getModificationDescription(changeType)
+          }
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setAiPrediction(data.prediction);
+      }
+    } catch (error) {
+      console.error('Failed to predict impact:', error);
+    } finally {
+      setIsPredicting(false);
+    }
   };
 
   const runComparison = async () => {
@@ -137,17 +172,17 @@ function ScenarioTesting() {
             <button onClick={() => addModification('add_verification')} className="mod-btn">
               ✅ Add Verification
             </button>
-            <button onClick={() => addModification('reorder_steps')} className="mod-btn">
-              🔄 Reorder Steps
-            </button>
-            <button onClick={() => addModification('add_required_field')} className="mod-btn">
-              📝 Add Required Field
-            </button>
-            <button onClick={() => addModification('simplify_form')} className="mod-btn">
-              ✨ Simplify Form
+            <button onClick={() => addModification('reduce_fields')} className="mod-btn">
+              📝 Reduce Fields
             </button>
             <button onClick={() => addModification('add_help_text')} className="mod-btn">
               💡 Add Help Text
+            </button>
+            <button onClick={() => addModification('improve_performance')} className="mod-btn">
+              ⚡ Improve Performance
+            </button>
+            <button onClick={() => addModification('simplify_ui')} className="mod-btn">
+              ✨ Simplify UI
             </button>
           </div>
 
@@ -178,6 +213,94 @@ function ScenarioTesting() {
             {isRunning ? '⏳ Running...' : '▶️ RUN COMPARISON'}
           </button>
         </div>
+
+        {/* AI Prediction Results */}
+        {aiPrediction && (
+          <div className="testing-card ai-prediction-card">
+            <h3>🔮 AI Impact Prediction</h3>
+            {isPredicting ? (
+              <div className="prediction-loading">Analyzing...</div>
+            ) : (
+              <>
+                <div className="prediction-metrics">
+                  {aiPrediction.predictedImpact.completionRate && (
+                    <div className="prediction-metric">
+                      <div className="metric-name">Completion Rate</div>
+                      <div className="metric-prediction">
+                        <span className="current">{(aiPrediction.predictedImpact.completionRate.current * 100).toFixed(1)}%</span>
+                        <span className="arrow">→</span>
+                        <span className={`predicted ${aiPrediction.predictedImpact.completionRate.direction}`}>
+                          {(aiPrediction.predictedImpact.completionRate.predicted * 100).toFixed(1)}%
+                        </span>
+                        <span className={`change ${aiPrediction.predictedImpact.completionRate.direction}`}>
+                          {aiPrediction.predictedImpact.completionRate.change}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {aiPrediction.predictedImpact.avgCompletionTime && (
+                    <div className="prediction-metric">
+                      <div className="metric-name">Avg Completion Time</div>
+                      <div className="metric-prediction">
+                        <span className="current">{(aiPrediction.predictedImpact.avgCompletionTime.current / 1000).toFixed(1)}s</span>
+                        <span className="arrow">→</span>
+                        <span className={`predicted ${aiPrediction.predictedImpact.avgCompletionTime.direction}`}>
+                          {(aiPrediction.predictedImpact.avgCompletionTime.predicted / 1000).toFixed(1)}s
+                        </span>
+                        <span className={`change ${aiPrediction.predictedImpact.avgCompletionTime.direction}`}>
+                          {aiPrediction.predictedImpact.avgCompletionTime.change}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {aiPrediction.riskAssessment && (
+                  <div className={`risk-assessment risk-${aiPrediction.riskAssessment.overallRisk}`}>
+                    <div className="risk-header">
+                      <span className="risk-icon">
+                        {aiPrediction.riskAssessment.overallRisk === 'high' ? '🔴' : 
+                         aiPrediction.riskAssessment.overallRisk === 'medium' ? '🟡' : '🟢'}
+                      </span>
+                      <span className="risk-level">{aiPrediction.riskAssessment.overallRisk.toUpperCase()} RISK</span>
+                    </div>
+                    <p className="risk-recommendation">{aiPrediction.riskAssessment.recommendation}</p>
+                  </div>
+                )}
+
+                {aiPrediction.personaImpact && aiPrediction.personaImpact.length > 0 && (
+                  <div className="persona-impact">
+                    <h4>👥 Persona Impact</h4>
+                    {aiPrediction.personaImpact.map((impact, idx) => (
+                      <div key={idx} className="persona-impact-item">
+                        <div className="persona-name">{impact.persona}</div>
+                        <div className="impact-desc">{impact.impact}</div>
+                        <div className="expected-improvement">{impact.expectedImprovement}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {aiPrediction.recommendations && aiPrediction.recommendations.length > 0 && (
+                  <div className="ai-recommendations">
+                    <h4>💡 Recommendations</h4>
+                    {aiPrediction.recommendations.map((rec, idx) => (
+                      <div key={idx} className={`recommendation-item priority-${rec.priority}`}>
+                        <div className="rec-title">{rec.title}</div>
+                        <div className="rec-desc">{rec.description}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="confidence-badge">
+                  Confidence: {aiPrediction.predictedImpact.confidence || 'medium'}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Comparison Results */}
         {comparisonResults && (

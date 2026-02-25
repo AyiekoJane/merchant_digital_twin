@@ -3,38 +3,137 @@ import './LiveInsights.css';
 import MetricsPanel from './insights/MetricsPanel';
 import LiveLogs from './insights/LiveLogs';
 import AgentStatusGrid from './insights/AgentStatusGrid';
+import AIInsights from './insights/AIInsights';
+import AIRecommendations from './insights/AIRecommendations';
 
 function LiveInsights() {
   const [summary, setSummary] = useState(null);
   const [events, setEvents] = useState([]);
+  const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [autoScroll, setAutoScroll] = useState(true);
   const eventsEndRef = useRef(null);
+  const eventsContainerRef = useRef(null);
+  const wsRef = useRef(null);
+  const userScrolledRef = useRef(false);
 
   useEffect(() => {
+    // Initial fetch
     fetchInsights();
     fetchEvents();
     
-    const insightsInterval = setInterval(fetchInsights, 3000);
-    const eventsInterval = setInterval(fetchEvents, 2000); // More frequent for live logs
+    // Setup WebSocket connection
+    connectWebSocket();
+    
+    // Fallback polling (in case WebSocket fails)
+    const insightsInterval = setInterval(fetchInsights, 5000);
+    const eventsInterval = setInterval(fetchEvents, 3000);
     
     return () => {
       clearInterval(insightsInterval);
       clearInterval(eventsInterval);
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
   }, []);
 
-  // Auto-scroll to bottom when new events arrive
+  const connectWebSocket = () => {
+    try {
+      const ws = new WebSocket('ws://localhost:3000');
+      
+      ws.onopen = () => {
+        console.log('🔌 WebSocket connected');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          if (message.type === 'insights') {
+            setInsights(message.data);
+            // Also update summary from operational metrics
+            if (message.data.operational) {
+              setSummary(prev => ({
+                ...prev,
+                ...message.data.operational
+              }));
+            }
+          } else if (message.type === 'event') {
+            // Add new event to the list
+            const formattedEvent = {
+              timestamp: new Date(message.data.timestamp).toLocaleTimeString(),
+              message: formatEventMessage(message.data),
+              type: message.data.event || message.data.eventType,
+              merchantId: message.data.merchantId
+            };
+            setEvents(prev => [formattedEvent, ...prev].slice(0, 50));
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      ws.onclose = () => {
+        console.log('🔌 WebSocket disconnected');
+        // Attempt to reconnect after 5 seconds
+        setTimeout(connectWebSocket, 5000);
+      };
+
+      wsRef.current = ws;
+    } catch (error) {
+      console.error('Failed to connect WebSocket:', error);
+    }
+  };
+
+  // Smart auto-scroll: only scroll if user is near bottom and auto-scroll is enabled
   useEffect(() => {
-    if (eventsEndRef.current) {
+    if (!autoScroll || !eventsEndRef.current || !eventsContainerRef.current) {
+      return;
+    }
+
+    // Check if user is near the bottom (within 100px)
+    const container = eventsContainerRef.current;
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+
+    // Only auto-scroll if user hasn't manually scrolled up
+    if (isNearBottom && !userScrolledRef.current) {
       eventsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [events]);
+  }, [events, autoScroll]);
+
+  // Detect when user manually scrolls
+  const handleScroll = () => {
+    if (!eventsContainerRef.current) return;
+
+    const container = eventsContainerRef.current;
+    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 10;
+
+    // If user scrolled to bottom, re-enable auto-scroll
+    if (isAtBottom) {
+      userScrolledRef.current = false;
+    } else {
+      // User scrolled up, disable auto-scroll temporarily
+      userScrolledRef.current = true;
+    }
+  };
 
   const fetchInsights = async () => {
     try {
-      const res = await fetch('http://localhost:3000/insights/summary');
-      const data = await res.json();
-      setSummary(data);
+      const [summaryRes, liveRes] = await Promise.all([
+        fetch('http://localhost:3000/insights/summary'),
+        fetch('http://localhost:3000/insights/live')
+      ]);
+      
+      const summaryData = await summaryRes.json();
+      const liveData = await liveRes.json();
+      
+      setSummary(summaryData);
+      setInsights(liveData);
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch insights:', error);
@@ -160,14 +259,27 @@ function LiveInsights() {
     <div className="live-insights">
       <div className="insights-header">
         <h2>Live Insights</h2>
-        <p>Real-time simulation metrics and agent status</p>
+        <p>Real-time simulation metrics and AI-powered analysis</p>
       </div>
 
       <MetricsPanel summary={summary} />
       
       <div className="insights-grid">
-        <AgentStatusGrid summary={summary} />
-        <LiveLogs events={events} eventsEndRef={eventsEndRef} />
+        <div className="insights-left-col">
+          <AIInsights insights={insights} />
+          <AIRecommendations recommendations={insights?.aiRecommendations || []} />
+        </div>
+        <div className="insights-right-col">
+          <AgentStatusGrid summary={summary} />
+          <LiveLogs 
+            events={events} 
+            eventsEndRef={eventsEndRef}
+            eventsContainerRef={eventsContainerRef}
+            autoScroll={autoScroll}
+            setAutoScroll={setAutoScroll}
+            onScroll={handleScroll}
+          />
+        </div>
       </div>
     </div>
   );

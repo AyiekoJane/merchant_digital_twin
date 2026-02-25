@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import './LiveLogs.css';
 
-function LiveLogs({ events, eventsEndRef }) {
+function LiveLogs({ events, eventsEndRef, eventsContainerRef, autoScroll, setAutoScroll, onScroll }) {
   const [filterMerchant, setFilterMerchant] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [showErrorsOnly, setShowErrorsOnly] = useState(false);
@@ -45,9 +45,19 @@ function LiveLogs({ events, eventsEndRef }) {
     <div className="live-logs">
       <div className="logs-header">
         <h3>📝 Live Event Stream</h3>
-        <div className="live-indicator">
-          <span className="pulse-dot"></span>
-          <span className="live-text">LIVE</span>
+        <div className="logs-header-controls">
+          <label className="auto-scroll-toggle">
+            <input
+              type="checkbox"
+              checked={autoScroll}
+              onChange={(e) => setAutoScroll(e.target.checked)}
+            />
+            <span>Auto-scroll</span>
+          </label>
+          <div className="live-indicator">
+            <span className="pulse-dot"></span>
+            <span className="live-text">LIVE</span>
+          </div>
         </div>
       </div>
 
@@ -86,7 +96,7 @@ function LiveLogs({ events, eventsEndRef }) {
         </div>
       </div>
 
-      <div className="log-container">
+      <div className="log-container" ref={eventsContainerRef} onScroll={onScroll}>
         {filteredEvents.length > 0 ? (
           <>
             {filteredEvents.map((event, index) => {

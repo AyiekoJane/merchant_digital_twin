@@ -3,6 +3,11 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
+const WebSocket = require('ws');
+
+// Load environment variables
+require('dotenv').config();
 
 // Import modules
 const { parseCsvFile, getDefaultCsvPath } = require('./modules/csvProcessor');
@@ -17,9 +22,53 @@ const {
 const { compareScenarios, getAvailableScenarios } = require('./modules/comparison');
 const { runAllScenarios } = require('./modules/scenarioRunner');
 const { getAvailableChannels, runChannelSimulation } = require('./modules/channelSimulation');
+const { getInsights, aggregateInsights } = require('./modules/insightsEngine');
+const { predictScenarioImpact } = require('./modules/aiScenarioEngine');
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
+
+// WebSocket clients
+const wsClients = new Set();
+
+// WebSocket connection handler
+wss.on('connection', (ws) => {
+  console.log('🔌 WebSocket client connected');
+  wsClients.add(ws);
+
+  ws.on('close', () => {
+    console.log('🔌 WebSocket client disconnected');
+    wsClients.delete(ws);
+  });
+
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+    wsClients.delete(ws);
+  });
+
+  // Send initial insights (async)
+  getInsights().then(insights => {
+    ws.send(JSON.stringify({ type: 'insights', data: insights }));
+  }).catch(error => {
+    console.error('Error sending initial insights:', error);
+  });
+});
+
+// Broadcast to all WebSocket clients
+function broadcastToClients(message) {
+  const data = JSON.stringify(message);
+  wsClients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(data);
+      } catch (error) {
+        console.error('Error broadcasting to client:', error);
+      }
+    }
+  });
+}
 
 // Middleware
 app.use(cors());
@@ -268,6 +317,22 @@ app.post('/simulation-event', (req, res) => {
     storeEvent(event);
     console.log(`📊 Event received: ${event.merchantId} - ${event.event}`);
     
+    // Broadcast event to WebSocket clients
+    broadcastToClients({
+      type: 'event',
+      data: event
+    });
+
+    // Trigger insights update and broadcast (async)
+    aggregateInsights().then(insights => {
+      broadcastToClients({
+        type: 'insights',
+        data: insights
+      });
+    }).catch(err => {
+      console.error('Error aggregating insights:', err);
+    });
+    
     res.status(201).json({
       success: true,
       message: 'Event stored successfully'
@@ -299,6 +364,22 @@ app.post('/events', (req, res) => {
     storeEvent(event);
     console.log(`📊 Event received: ${event.merchantId} - ${event.event}`);
     
+    // Broadcast event to WebSocket clients
+    broadcastToClients({
+      type: 'event',
+      data: event
+    });
+
+    // Trigger insights update and broadcast (async)
+    aggregateInsights().then(insights => {
+      broadcastToClients({
+        type: 'insights',
+        data: insights
+      });
+    }).catch(err => {
+      console.error('Error aggregating insights:', err);
+    });
+    
     res.status(201).json({
       success: true,
       message: 'Event stored successfully'
@@ -321,6 +402,19 @@ app.get('/insights/summary', (req, res) => {
     console.error('Error generating summary:', error);
     res.status(500).json({
       error: 'Failed to generate summary',
+      message: error.message
+    });
+  }
+});
+
+app.get('/insights/live', async (req, res) => {
+  try {
+    const insights = await getInsights();
+    res.json(insights);
+  } catch (error) {
+    console.error('Error generating live insights:', error);
+    res.status(500).json({
+      error: 'Failed to generate live insights',
       message: error.message
     });
   }
@@ -529,6 +623,35 @@ app.post('/simulate/channel', async (req, res) => {
 // SCENARIO RUNNER ENDPOINT
 // ============================================================================
 
+app.post('/scenario/predict', async (req, res) => {
+  try {
+    const { scenarioChange } = req.body;
+
+    if (!scenarioChange || !scenarioChange.type) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'scenarioChange object with type is required'
+      });
+    }
+
+    console.log(`🔮 Predicting impact for scenario: ${scenarioChange.type}`);
+
+    const currentInsights = getSummaryInsights();
+    const prediction = await predictScenarioImpact(scenarioChange, currentInsights);
+
+    res.json({
+      success: true,
+      prediction
+    });
+  } catch (error) {
+    console.error('Error predicting scenario:', error);
+    res.status(500).json({
+      error: 'Failed to predict scenario impact',
+      message: error.message
+    });
+  }
+});
+
 app.post('/run-scenarios', async (req, res) => {
   try {
     console.log('🎬 Starting multi-scenario simulation...');
@@ -617,16 +740,18 @@ app.get('/scenarios/list', (req, res) => {
 // START SERVER
 // ============================================================================
 
-app.listen(PORT, async () => {
+server.listen(PORT, async () => {
   console.log('🚀 Digital Twin Unified Backend');
   console.log('═'.repeat(60));
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`WebSocket server running on ws://localhost:${PORT}`);
   console.log('\nAvailable endpoints:');
   console.log('  GET    /health                   - Health check');
   console.log('  GET    /merchants                - Get merchant profiles');
   console.log('  POST   /merchants/upload         - Upload CSV');
   console.log('  POST   /simulation-event         - Receive agent events');
   console.log('  GET    /insights/summary         - Overall metrics');
+  console.log('  GET    /insights/live            - Live AI insights');
   console.log('  GET    /insights/scenario/:id    - Scenario metrics');
   console.log('  GET    /insights/compare         - Compare scenarios');
   console.log('  GET    /insights/scenarios       - List scenarios');
@@ -635,6 +760,7 @@ app.listen(PORT, async () => {
   console.log('  DELETE /insights/clear           - Clear events');
   console.log('  POST   /run-scenarios            - Run simulations');
   console.log('  GET    /scenarios/list           - List scenario configs');
+  console.log('  WS     /                         - WebSocket connection');
   console.log('═'.repeat(60));
   
   await loadDefaultMerchants();
