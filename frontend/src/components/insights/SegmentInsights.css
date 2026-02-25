@@ -1,0 +1,206 @@
+.segment-insights {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+.segment-insights.empty {
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.segment-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.segment-title .icon {
+  font-size: 20px;
+}
+
+.tooltip-icon {
+  margin-left: auto;
+  font-size: 16px;
+  color: #999;
+  cursor: help;
+}
+
+.segment-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e9ecef;
+  overflow-x: auto;
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  color: #333;
+  background: #f8f9fa;
+}
+
+.tab-button.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+.tab-icon {
+  font-size: 18px;
+}
+
+.segment-content {
+  min-height: 200px;
+}
+
+.segment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.segment-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 10px;
+  padding: 20px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.segment-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.segment-card.excellent {
+  border-color: #4CAF50;
+}
+
+.segment-card.good {
+  border-color: #8BC34A;
+}
+
+.segment-card.fair {
+  border-color: #FF9800;
+}
+
+.segment-card.poor {
+  border-color: #f44336;
+}
+
+.segment-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.segment-icon {
+  font-size: 24px;
+}
+
+.segment-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c3e50;
+  text-transform: capitalize;
+}
+
+.segment-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.metric-row.highlight {
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.metric-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-weight: 700;
+  color: #333;
+}
+
+.metric-value.excellent {
+  color: #4CAF50;
+}
+
+.metric-value.good {
+  color: #8BC34A;
+}
+
+.metric-value.fair {
+  color: #FF9800;
+}
+
+.metric-value.poor {
+  color: #f44336;
+}
+
+.metric-value.warning {
+  color: #FF5722;
+}
+
+.success-bar {
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.success-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
+  transition: width 0.5s ease;
+}
+
+.no-data-message {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+.empty-message {
+  color: #999;
+  font-size: 14px;
+}

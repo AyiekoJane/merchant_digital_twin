@@ -1,0 +1,177 @@
+.journey-funnel {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+.journey-funnel.empty {
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.funnel-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.funnel-title .icon {
+  font-size: 20px;
+}
+
+.empty-message {
+  color: #999;
+  font-size: 14px;
+}
+
+.funnel-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.funnel-step {
+  position: relative;
+}
+
+.step-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.step-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.step-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.step-stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stat-badge.entered {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.stat-badge.completed {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.stat-badge.dropped {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.funnel-bar-container {
+  margin-bottom: 12px;
+}
+
+.funnel-bar {
+  height: 48px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.funnel-bar:hover {
+  border-color: #667eea;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.5s ease;
+  position: relative;
+}
+
+.bar-fill::after {
+  content: attr(data-completion);
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.step-metrics {
+  display: flex;
+  gap: 20px;
+  padding: 8px 12px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metric-label {
+  font-size: 13px;
+  color: #666;
+}
+
+.metric-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+}
+
+.metric-value.success {
+  color: #4CAF50;
+}
+
+.metric-value.warning {
+  color: #FF9800;
+}
+
+.funnel-arrow {
+  text-align: center;
+  font-size: 24px;
+  color: #ccc;
+  margin: 8px 0;
+}
