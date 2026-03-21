@@ -711,6 +711,77 @@ app.get('/scenarios', (req, res) => {
 });
 
 // ============================================================================
+// ============================================================================
+// FRONTEND-TRIGGERED SIMULATION ENDPOINTS
+// ============================================================================
+
+app.get('/api/scenarios', (req, res) => {
+  try {
+    const scenariosDir = process.env.NODE_ENV === 'production' ? '/scenarios' : path.join(__dirname, '..', 'scenarios');
+    const files = fs.readdirSync(scenariosDir).filter(f => f.endsWith('.json'));
+    const scenarios = files.map(file => JSON.parse(fs.readFileSync(path.join(scenariosDir, file), 'utf8')));
+    res.json({ scenarios });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to list scenarios', message: error.message });
+  }
+});
+
+app.post('/api/run-scenario', async (req, res) => {
+  try {
+    const { scenarioId = 'BASELINE', merchantCount, onboardingUrl } = req.body;
+    const queueUrl = process.env.SIMULATION_QUEUE_URL || 'http://simulation-queue:3005';
+
+    // Load scenario config
+    const scenariosDir = process.env.NODE_ENV === 'production' ? '/scenarios' : path.join(__dirname, '..', 'scenarios');
+    const scenarioFiles = fs.readdirSync(scenariosDir).filter(f => f.endsWith('.json'));
+    const scenarios = scenarioFiles.map(f => JSON.parse(fs.readFileSync(path.join(scenariosDir, f), 'utf8')));
+    const scenario = scenarios.find(s => s.scenarioId === scenarioId) || scenarios[0];
+
+    if (!scenario) return res.status(404).json({ error: 'Scenario not found' });
+
+    // Use cached merchants
+    if (!cachedMerchants || cachedMerchants.length === 0) {
+      return res.status(400).json({ error: 'No merchants loaded', message: 'Upload a CSV first' });
+    }
+
+    const limit = merchantCount && merchantCount > 0 ? merchantCount : cachedMerchants.length;
+    // Always use the internal Docker URL — ignore any URL sent from the frontend
+    const internalPortalUrl = process.env.ONBOARDING_URL || 'http://mock-portal/index.html';
+    const merchants = cachedMerchants.slice(0, limit).map(m => ({
+      ...m,
+      scenarioId: scenario.scenarioId,
+      onboardingUrl: internalPortalUrl,
+      scenarioConfig: {
+        latencyMultiplier: scenario.latencyMultiplier,
+        retryBonus: scenario.retryBonus,
+        successProbabilityBonus: scenario.successProbabilityBonus
+      }
+    }));
+
+    // Clear previous events
+    clearEvents();
+
+    // Enqueue batch
+    const runId = `run-${Date.now()}`;
+    const response = await fetch(`${queueUrl}/enqueue-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ merchants, scenarioId: scenario.scenarioId, onboardingUrl: internalPortalUrl })
+    });
+
+    if (!response.ok) throw new Error(`Queue returned ${response.status}`);
+    const result = await response.json();
+
+    console.log(`🚀 Run ${runId}: enqueued ${result.enqueued} jobs for scenario ${scenario.scenarioId}`);
+    res.json({ runId, enqueued: result.enqueued, scenarioId: scenario.scenarioId });
+
+  } catch (error) {
+    console.error('Error starting simulation run:', error.message);
+    res.status(500).json({ error: 'Failed to start simulation', message: error.message });
+  }
+});
+
+// ============================================================================
 // QUEUE STATS PROXY (for frontend polling)
 // ============================================================================
 

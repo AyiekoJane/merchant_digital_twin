@@ -58,7 +58,6 @@ async function emitEvent(eventData) {
     // Non-fatal - insight service may be briefly unavailable
   }
 }
-
 // ── Human-like Delays ─────────────────────────────────────────────────────────
 async function networkDelay(networkProfile) {
   const base = NETWORK_LATENCY[networkProfile] || 500;
@@ -105,7 +104,7 @@ async function runMerchantSimulation(page, merchant) {
   let currentStep = 0;
   const maxSteps = 5;
 
-  const emit = (data) => emitEvent({ merchantId: merchant.merchantId, scenarioId: merchant.scenarioId || 'UNKNOWN', ...data });
+  const emit = (data) => emitEvent({ merchantId: merchant.merchantId, scenarioId: merchant.scenarioId || 'UNKNOWN', runId: merchant.runId || null, ...data });
 
   try {
     // ── Step 1: Navigate ──────────────────────────────────────────────────────
@@ -246,6 +245,9 @@ async function processJob(job) {
 
   try {
     const result = await runMerchantSimulation(page, merchant);
+    if (!result.success) {
+      console.warn(`[${WORKER_ID}] ${merchant.merchantId} failed at step ${result.failedAtStep}: ${result.error}`);
+    }
     console.log(`[${WORKER_ID}] Done ${merchant.merchantId} success=${result.success} (active: ${activeContexts - 1}/${MAX_CONTEXTS})`);
     return result;
   } finally {

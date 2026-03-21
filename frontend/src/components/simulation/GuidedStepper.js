@@ -18,10 +18,10 @@ const CHANNELS = [
 
 export default function GuidedStepper({
   uploadedFiles, onFileUpload,
-  portalUrl, onUrlChange,
   merchantCount, onMerchantCountChange,
   simulationSpeed, onSpeedChange,
   networkVariability, onNetworkVariabilityChange,
+  selectedScenarioId, availableScenarios, onScenarioChange,
   onRunSimulation, isRunning, statusMessage, loadingCsvs,
 }) {
   const [currentStep,       setCurrentStep]       = useState(1);
@@ -33,13 +33,13 @@ export default function GuidedStepper({
   // Auto-advance on file upload
   useEffect(() => {
     if (uploadedFiles.merchants && currentStep === 1) setCurrentStep(2);
-  }, [uploadedFiles.merchants]);
+  }, [uploadedFiles.merchants, currentStep]);
   useEffect(() => {
     if (uploadedFiles.network && currentStep === 2) setCurrentStep(3);
-  }, [uploadedFiles.network]);
+  }, [uploadedFiles.network, currentStep]);
   useEffect(() => {
     if (uploadedFiles.bio && currentStep === 3) setCurrentStep(4);
-  }, [uploadedFiles.bio]);
+  }, [uploadedFiles.bio, currentStep]);
 
   // Validation summary
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function GuidedStepper({
     if (id === 2) return !!uploadedFiles.network;
     if (id === 3) return !!uploadedFiles.bio;
     if (id === 4) return !!selectedChannel;
-    if (id === 5) return !!portalUrl;
+    if (id === 5) return true;
     return false;
   };
 
@@ -232,11 +232,12 @@ export default function GuidedStepper({
                     <input
                       type="url"
                       className="gs-input"
-                      value={portalUrl}
-                      onChange={e => onUrlChange(e.target.value)}
-                      placeholder="https://your-portal.com/onboarding"
+                      value="http://localhost:8888/"
+                      readOnly
+                      style={{ opacity: 0.7, cursor: 'default' }}
                     />
                   </div>
+                  <p className="gs-hint">Mock portal — managed internally by the simulation engine</p>
                 </div>
 
                 <div className="gs-field">
@@ -308,8 +309,31 @@ export default function GuidedStepper({
                     )}
                   </ReviewCard>
 
+                  <ReviewCard icon="🧩" title="Scenario">
+                    {availableScenarios?.length > 0 ? (
+                      <div className="gs-scenario-select-wrap">
+                        <select
+                          className="gs-scenario-select"
+                          value={selectedScenarioId}
+                          onChange={e => onScenarioChange?.(e.target.value)}
+                        >
+                          {availableScenarios.map(s => (
+                            <option key={s.scenarioId} value={s.scenarioId}>
+                              {s.scenarioId} — {s.description}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="gs-scenario-hint">
+                          {availableScenarios.find(s => s.scenarioId === selectedScenarioId)?.description || ''}
+                        </div>
+                      </div>
+                    ) : (
+                      <ReviewRow label="Scenario" value={selectedScenarioId || 'BASELINE'} />
+                    )}
+                  </ReviewCard>
+
                   <ReviewCard icon="🌐" title="Portal">
-                    <div className="gs-portal-url">{portalUrl || '—'}</div>
+                    <div className="gs-portal-url">http://localhost:8888/</div>
                   </ReviewCard>
                 </div>
 

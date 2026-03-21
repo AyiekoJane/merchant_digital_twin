@@ -38,9 +38,9 @@ app.post('/enqueue', async (req, res) => {
 });
 
 // Enqueue a batch of merchant jobs
-// POST /enqueue-batch  body: { merchants: [...], scenarioId, onboardingUrl }
+// POST /enqueue-batch  body: { merchants: [...], scenarioId, runId, onboardingUrl }
 app.post('/enqueue-batch', async (req, res) => {
-  const { merchants, scenarioId, onboardingUrl } = req.body;
+  const { merchants, scenarioId, runId, onboardingUrl } = req.body;
   if (!Array.isArray(merchants)) {
     return res.status(400).json({ error: 'merchants must be an array' });
   }
@@ -48,13 +48,13 @@ app.post('/enqueue-batch', async (req, res) => {
   try {
     const jobs = merchants.map(m => ({
       name: 'simulate',
-      data: { ...m, scenarioId, onboardingUrl },
+      data: { ...m, scenarioId, runId, onboardingUrl },
       opts: { attempts: 2, backoff: { type: 'exponential', delay: 2000 } }
     }));
 
     await simulationQueue.addBulk(jobs);
-    console.log(`Enqueued ${jobs.length} merchant jobs for scenario ${scenarioId}`);
-    res.json({ enqueued: jobs.length, scenarioId });
+    console.log(`Enqueued ${jobs.length} merchant jobs for scenario ${scenarioId} run ${runId}`);
+    res.json({ enqueued: jobs.length, scenarioId, runId });
   } catch (err) {
     console.error('Batch enqueue error:', err.message);
     res.status(500).json({ error: err.message });

@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Port map (host):
 #   3000 - Backend API + WebSocket  (frontend proxy target)
 #   3001 - Merchant Generator
@@ -127,8 +125,6 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      insight-service:
-        condition: service_healthy
       simulation-queue:
         condition: service_started
     networks:
@@ -136,7 +132,6 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - INSIGHT_SERVICE_URL=http://insight-service:3000
       - SIMULATION_QUEUE_URL=http://simulation-queue:3005
       - ONBOARDING_URL=http://mock-portal/index.html
     env_file:
@@ -145,31 +140,6 @@ services:
       - ./data:/data:ro
       - ./scenarios:/scenarios:ro
       - ./mock-portal:/mock-portal:ro
-
-  # ── Scenario Runner ────────────────────────────────────────────────────────
-  scenario-runner:
-    build:
-      context: ./scenario-runner
-      dockerfile: Dockerfile
-    container_name: scenario-runner
-    depends_on:
-      simulation-queue:
-        condition: service_healthy
-      merchant-generator:
-        condition: service_started
-      insight-service:
-        condition: service_healthy
-    networks:
-      - digital-twin-network
-    environment:
-      - NODE_ENV=production
-      - MERCHANT_GENERATOR_URL=http://merchant-generator:3001/generate-merchants-from-csv
-      - INSIGHT_SERVICE_URL=http://backend:3000
-      - SIMULATION_QUEUE_URL=http://simulation-queue:3005
-      - ONBOARDING_URL=http://mock-portal/index.html
-      - MAX_MERCHANTS=${MAX_MERCHANTS:-5}
-    volumes:
-      - ./scenarios:/scenarios:ro
 
 networks:
   digital-twin-network:
