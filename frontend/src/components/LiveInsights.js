@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './LiveInsights.css';
 import MetricsPanel from './insights/MetricsPanel';
 import SimulationTimeline from './insights/SimulationTimeline';
 import AIAssistantPanel from './insights/AIAssistantPanel';
-import AIInsights from './insights/AIInsights';
 import AIRecommendations from './insights/AIRecommendations';
 
 // ── Event message formatter (all original logic preserved) ───────────────────
@@ -75,22 +74,7 @@ function LiveInsights({ showToast }) {
   const wsRef = useRef(null);
   const timelineRef = useRef(null);
 
-  useEffect(() => {
-    fetchInsights();
-    fetchEvents();
-    connectWebSocket();
-
-    const insightsInterval = setInterval(fetchInsights, 5000);
-    const eventsInterval   = setInterval(fetchEvents,   3000);
-
-    return () => {
-      clearInterval(insightsInterval);
-      clearInterval(eventsInterval);
-      wsRef.current?.close();
-    };
-  }, []);
-
-  const connectWebSocket = () => {
+  const connectWebSocket = useCallback(() => {
     try {
       const ws = new WebSocket('ws://localhost:3000');
 
@@ -129,7 +113,22 @@ function LiveInsights({ showToast }) {
 
       wsRef.current = ws;
     } catch { setWsStatus('polling'); }
-  };
+  }, [showToast]);
+
+  useEffect(() => {
+    fetchInsights();
+    fetchEvents();
+    connectWebSocket();
+
+    const insightsInterval = setInterval(fetchInsights, 5000);
+    const eventsInterval   = setInterval(fetchEvents,   3000);
+
+    return () => {
+      clearInterval(insightsInterval);
+      clearInterval(eventsInterval);
+      wsRef.current?.close();
+    };
+  }, [connectWebSocket]);
 
   const fetchInsights = async () => {
     try {
@@ -232,7 +231,7 @@ function LiveInsights({ showToast }) {
       <div className="li-layout">
         <div className="li-main">
           <SimulationTimeline events={events} getEventClass={getEventClass} timelineRef={timelineRef} />
-          <AIInsights insights={insights} />
+          <AIRecommendations recommendations={insights?.aiRecommendations} />
         </div>
         <div className="li-sidebar">
           <AIAssistantPanel insights={insights} summary={summary} />

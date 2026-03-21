@@ -22,7 +22,7 @@ const {
 const { compareScenarios, getAvailableScenarios } = require('./modules/comparison');
 const { runAllScenarios } = require('./modules/scenarioRunner');
 const { getAvailableChannels, runChannelSimulation } = require('./modules/channelSimulation');
-const { getInsights, aggregateInsights } = require('./modules/insightsEngine');
+const { getInsights, aggregateInsights, computeOperationalMetrics, detectFrictionPoints, analyzePersonaStruggles } = require('./modules/insightsEngine');
 const { predictScenarioImpact } = require('./modules/aiScenarioEngine');
 
 const app = express();
@@ -292,8 +292,25 @@ app.post('/merchants/upload', upload.single('csvFile'), async (req, res) => {
 });
 
 // ============================================================================
+// ============================================================================
 // INSIGHT ENDPOINTS
 // ============================================================================
+
+// Debounced insights aggregation — fires once event stream goes quiet
+let insightsDebounceTimer = null;
+let expectedMerchantCount = 0;   // set when a run starts
+let summaryCount = 0;             // tracks ONBOARDING_SUMMARY events received
+
+function scheduleInsightsUpdate(force = false) {
+  clearTimeout(insightsDebounceTimer);
+  const delay = force ? 0 : 3000; // 3s quiet window, or immediate on force
+  insightsDebounceTimer = setTimeout(() => {
+    aggregateInsights().then(insights => {
+      broadcastToClients({ type: 'insights', data: insights });
+      if (force) console.log('🧠 Final AI analysis complete');
+    }).catch(err => console.error('Error aggregating insights:', err));
+  }, delay);
+}
 
 app.post('/simulation-event', (req, res) => {
   try {
@@ -303,41 +320,44 @@ app.post('/simulation-event', (req, res) => {
     const missingFields = requiredFields.filter(field => !event[field]);
     
     if (missingFields.length > 0) {
-      return res.status(400).json({
-        error: 'Missing required fields',
-        missing: missingFields
-      });
+      return res.status(400).json({ error: 'Missing required fields', missing: missingFields });
     }
     
     storeEvent(event);
     console.log(`📊 Event received: ${event.merchantId} - ${event.event}`);
     
-    // Broadcast event to WebSocket clients
-    broadcastToClients({
-      type: 'event',
-      data: event
-    });
+    // Always broadcast the raw event immediately for live UI updates
+    broadcastToClients({ type: 'event', data: event });
 
-    // Trigger insights update and broadcast (async)
-    aggregateInsights().then(insights => {
+    // Track summary completions
+    if (event.event === 'ONBOARDING_SUMMARY') {
+      summaryCount++;
+      const allDone = expectedMerchantCount > 0 && summaryCount >= expectedMerchantCount;
+
+      // Broadcast a lightweight operational update immediately so the AI Assistant
+      // panel populates during the simulation without waiting for the full AI call
       broadcastToClients({
         type: 'insights',
-        data: insights
+        data: {
+          operational: computeOperationalMetrics(),
+          frictionPoints: detectFrictionPoints(),
+          personaStruggles: analyzePersonaStruggles(),
+          aiRecommendations: []
+        }
       });
-    }).catch(err => {
-      console.error('Error aggregating insights:', err);
-    });
+
+      if (allDone) {
+        console.log(`✅ All ${summaryCount} merchants complete — running final AI analysis`);
+        scheduleInsightsUpdate(true);
+      } else {
+        scheduleInsightsUpdate();
+      }
+    }
     
-    res.status(201).json({
-      success: true,
-      message: 'Event stored successfully'
-    });
+    res.status(201).json({ success: true, message: 'Event stored successfully' });
   } catch (error) {
     console.error('Error storing event:', error);
-    res.status(500).json({
-      error: 'Failed to store event',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to store event', message: error.message });
   }
 });
 
@@ -350,41 +370,24 @@ app.post('/events', (req, res) => {
     const missingFields = requiredFields.filter(field => !event[field]);
     
     if (missingFields.length > 0) {
-      return res.status(400).json({
-        error: 'Missing required fields',
-        missing: missingFields
-      });
+      return res.status(400).json({ error: 'Missing required fields', missing: missingFields });
     }
     
     storeEvent(event);
     console.log(`📊 Event received: ${event.merchantId} - ${event.event}`);
     
-    // Broadcast event to WebSocket clients
-    broadcastToClients({
-      type: 'event',
-      data: event
-    });
+    broadcastToClients({ type: 'event', data: event });
 
-    // Trigger insights update and broadcast (async)
-    aggregateInsights().then(insights => {
-      broadcastToClients({
-        type: 'insights',
-        data: insights
-      });
-    }).catch(err => {
-      console.error('Error aggregating insights:', err);
-    });
+    if (event.event === 'ONBOARDING_SUMMARY') {
+      summaryCount++;
+      const allDone = expectedMerchantCount > 0 && summaryCount >= expectedMerchantCount;
+      scheduleInsightsUpdate(allDone);
+    }
     
-    res.status(201).json({
-      success: true,
-      message: 'Event stored successfully'
-    });
+    res.status(201).json({ success: true, message: 'Event stored successfully' });
   } catch (error) {
     console.error('Error storing event:', error);
-    res.status(500).json({
-      error: 'Failed to store event',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to store event', message: error.message });
   }
 });
 
@@ -758,8 +761,10 @@ app.post('/api/run-scenario', async (req, res) => {
       }
     }));
 
-    // Clear previous events
+    // Clear previous events and reset counters
     clearEvents();
+    summaryCount = 0;
+    expectedMerchantCount = merchants.length;
 
     // Enqueue batch
     const runId = `run-${Date.now()}`;

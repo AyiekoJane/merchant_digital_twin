@@ -16,7 +16,7 @@ function getEventCount() {
 
 // Clear all events
 function clearEvents() {
-  events = [];
+  events.length = 0;
 }
 
 // Get all merchant summaries (final outcomes)
