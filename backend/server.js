@@ -1,3 +1,4 @@
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -22,6 +23,7 @@ const {
 const { compareScenarios, getAvailableScenarios } = require('./modules/comparison');
 const { runAllScenarios } = require('./modules/scenarioRunner');
 const { getAvailableChannels, runChannelSimulation } = require('./modules/channelSimulation');
+const { runCustomerSimulation } = require('./modules/customerSimulation');
 const { getInsights, aggregateInsights } = require('./modules/insightsEngine');
 const { predictScenarioImpact } = require('./modules/aiScenarioEngine');
 
@@ -733,6 +735,422 @@ app.get('/scenarios/list', (req, res) => {
       error: 'Failed to list scenarios',
       message: error.message
     });
+  }
+});
+
+// ============================================================================
+// CUSTOMER SIMULATION ENDPOINTS
+// ============================================================================
+
+let cachedCustomers = null;
+
+// ── Appium step runner — streams each step as a WS event ──────────────────
+async function runAppiumSteps(customer, broadcastFn, scenario = 'normal') {
+  const PKG   = 'ke.safaricom.mpesa.business.uat';
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // Scenario-based delays and behaviours
+  const SCENARIO_DELAYS = {
+    normal:          0,
+    slow_network:    3000,
+    network_timeout: 2000,
+    slow_device:     2500,
+    wrong_pin:       0,
+    low_balance:     0,
+  };
+  const extraDelay = SCENARIO_DELAYS[scenario] || 0;
+
+  function step(name, detail = '') {
+    const event = {
+      merchantId: customer.customer_id,
+      event:      'APP_STEP',
+      step:       name,
+      detail,
+      channel:    'APP',
+      userType:   'customer',
+      timestamp:  Date.now()
+    };
+    broadcastFn({ type: 'event', data: event });
+    console.log(`📱 [${customer.customer_id}] ${name}${detail ? ': ' + detail : ''}`);
+  }
+
+  let driver;
+  try {
+    const { remote } = require('webdriverio');
+    step('CONNECTING', 'Connecting to Appium...');
+    driver = await remote({
+      hostname: process.env.APPIUM_HOST || 'localhost',
+      port:     parseInt(process.env.APPIUM_PORT || '4723'),
+      protocol: 'http',
+      path:     '/',
+      connectionRetryTimeout: 60000,
+      connectionRetryCount:   1,
+      capabilities: {
+        platformName:            'Android',
+        'appium:automationName': 'UiAutomator2',
+        'appium:deviceName':     process.env.APPIUM_DEVICE_NAME || '1208937448002025',
+        'appium:appPackage':     PKG,
+        'appium:appActivity':    'com.mpesa.splash.SplashActivity',
+        'appium:noReset':        true
+      }
+    });
+
+    step('APP_RESTART', 'Restarting app to home screen');
+    try { await driver.terminateApp(PKG); } catch { /* ignore */ }
+    await sleep(1500);
+    await driver.activateApp(PKG);
+    await sleep(3000);
+
+    // Handle login PIN screen if present (app requires PIN on launch)
+    const loginPin = process.env.MPESA_PIN || customer.pin || '';
+    try {
+      const pinPad = await driver.$(`id:${PKG}:id/pinNumPad`);
+      if (await pinPad.isDisplayed()) {
+        step('LOGIN_PIN', `App locked — entering login PIN`);
+        if (loginPin) {
+          for (const digit of loginPin) {
+            try {
+              const cell = await driver.$(`id:${PKG}:id/cell${digit}`);
+              await cell.click();
+              await sleep(400);
+            } catch { /* ignore */ }
+          }
+          step('LOGIN_PIN_ENTERED', 'Login PIN entered — waiting for home screen');
+        } else {
+          step('LOGIN_PIN_SKIPPED', 'Login PIN screen detected but MPESA_PIN not set in .env');
+        }
+      }
+    } catch { /* no login PIN screen */ }
+
+    // Wait up to 20s for the bottom nav to appear (app fully loaded past login)
+    step('WAITING_FOR_HOME', 'Waiting for home screen to load...');
+    let homeLoaded = false;
+    for (let i = 0; i < 20; i++) {
+      await sleep(1000);
+      try {
+        const nav = await driver.$(`id:${PKG}:id/bottomNavigationTransactions`);
+        if (await nav.isDisplayed()) { homeLoaded = true; break; }
+      } catch { /* not yet */ }
+    }
+    if (!homeLoaded) throw new Error('Home screen did not load within 20s — check if app is logged in');
+    step('HOME_LOADED', 'Home screen ready');
+
+    // Dismiss popup
+    try {
+      const closeBtn = await driver.$(`id:${PKG}:id/closeButton`);
+      if (await closeBtn.isDisplayed()) {
+        await closeBtn.click();
+        await sleep(800);
+        step('POPUP_DISMISSED', 'Dismissed overlay popup');
+      }
+    } catch { /* no popup */ }
+
+    // Transact tab
+    step('NAV_TRANSACT', 'Tapping Transact tab');
+    const transact = await driver.$(`id:${PKG}:id/bottomNavigationTransactions`);
+    await transact.click();
+    await sleep(2000);
+
+    // Request Payment menu item
+    step('TAP_REQUEST_PAYMENT', 'Tapping REQUEST PAYMENT menu item');
+    const reqPayment = await driver.$(
+      '//android.widget.FrameLayout[@clickable="true"][.//android.widget.TextView[@text="REQUEST PAYMENT"]]'
+    );
+    await reqPayment.click();
+    await sleep(2000);
+
+    // Request Payment row
+    step('TAP_REQUEST_ROW', 'Tapping REQUEST PAYMENT row');
+    const reqRow = await driver.$(`id:${PKG}:id/transactionLayoutContainer`);
+    await reqRow.click();
+    await sleep(2000);
+
+    // From Customer bottom sheet
+    step('TAP_FROM_CUSTOMER', 'Tapping REQUEST PAYMENT FROM CUSTOMER');
+    const fromCustomer = await driver.$(
+      '//android.view.ViewGroup[@clickable="true"][.//android.widget.TextView[@text="REQUEST PAYMENT FROM CUSTOMER"]]'
+    );
+    await fromCustomer.click();
+    await sleep(2000);
+
+    // Phone number
+    const phone = customer.phone || '254712510792';
+    step('ENTER_PHONE', `Entering phone number ${phone}`);
+    const phoneField = await driver.$(`id:${PKG}:id/inputEditText`);
+    await phoneField.click();
+    await sleep(500);
+    await phoneField.setValue(phone);
+    await sleep(800);
+
+    step('SUBMIT_PHONE', 'Tapping CONTINUE on phone screen');
+    const phoneSubmit = await driver.$(`id:${PKG}:id/submitButton`);
+    await phoneSubmit.click();
+    await sleep(3000);
+
+    // ── Scenario: slow network / timeout after phone ──────────────────────
+    if (scenario === 'slow_network') {
+      step('NETWORK_DELAY', `2G network — adding ${extraDelay}ms delay`);
+      // emit a network event for insights engine
+      broadcastFn({ type: 'event', data: { merchantId: customer.customer_id, event: 'NETWORK_DELAY', networkProfile: '2G_EDGE', latency: extraDelay, channel: 'APP', timestamp: Date.now() } });
+      await sleep(extraDelay);
+    }
+    if (scenario === 'network_timeout') {
+      step('NETWORK_TIMEOUT', 'Simulating connection drop — retrying after 4s');
+      broadcastFn({ type: 'event', data: { merchantId: customer.customer_id, event: 'TIMEOUT', step: 'after_phone', networkProfile: '3G_POOR', channel: 'APP', timestamp: Date.now() } });
+      await sleep(4000);
+      step('SCENARIO_INJECT', 'Connection restored — continuing');
+    }
+    if (scenario === 'slow_device') {
+      step('SCENARIO_INJECT', `Low-end device — extra ${extraDelay}ms render time`);
+      await sleep(extraDelay);
+    }
+
+    // Amount — use inflated amount for low_balance scenario
+    const baseAmount = customer.installment_amount || 50;
+    const amount = scenario === 'low_balance'
+      ? String(baseAmount * 1000)   // deliberately too high
+      : String(baseAmount);
+
+    step('ENTER_AMOUNT', `Entering amount KES ${amount}${scenario === 'low_balance' ? ' (testing insufficient balance)' : ''}`);
+    for (const digit of amount) {
+      const cell = await driver.$(`id:${PKG}:id/cell${digit}`);
+      await cell.click();
+      await sleep(300);
+    }
+
+    if (scenario === 'slow_network') {
+      step('NETWORK_DELAY', `2G delay before CONTINUE`);
+      broadcastFn({ type: 'event', data: { merchantId: customer.customer_id, event: 'NETWORK_DELAY', networkProfile: '2G_EDGE', latency: extraDelay, channel: 'APP', timestamp: Date.now() } });
+      await sleep(extraDelay);
+    }
+    step('SUBMIT_AMOUNT', 'Tapping CONTINUE on amount screen');
+    const amountContinue = await driver.$(`id:${PKG}:id/continueButton`);
+    await amountContinue.click();
+    await sleep(3000);
+
+    // Description
+    const description = customer.description || 'request payment';
+    step('ENTER_DESCRIPTION', `Entering description: "${description}"`);
+    const descField = await driver.$(`id:${PKG}:id/inputEditText`);
+    await descField.click();
+    await sleep(500);
+    await descField.setValue(description);
+    await sleep(800);
+
+    step('SUBMIT_DESCRIPTION', 'Tapping CONTINUE on description screen');
+    const descSubmit = await driver.$(`id:${PKG}:id/submitButton`);
+    await descSubmit.click();
+    await sleep(3000);
+
+    // Confirmation screen — try common button IDs
+    step('CONFIRMATION_SCREEN', 'On confirmation screen — looking for confirm button');
+    let confirmed = false;
+    for (const btnId of ['submitButton', 'continueButton', 'confirmButton', 'btnConfirm', 'actionButton']) {
+      try {
+        const btn = await driver.$(`id:${PKG}:id/${btnId}`);
+        if (await btn.isDisplayed()) {
+          const txt = await btn.getAttribute('text');
+          step('TAP_CONFIRM', `Tapping ${btnId} ("${txt}")`);
+          await btn.click();
+          await sleep(3000);
+          confirmed = true;
+          break;
+        }
+      } catch { /* try next */ }
+    }
+    if (!confirmed) {
+      // XPath fallback
+      try {
+        const anyBtn = await driver.$(
+          '//*[@clickable="true"][contains(@text,"CONFIRM") or contains(@text,"CONTINUE") or contains(@text,"PROCEED")]'
+        );
+        const txt = await anyBtn.getAttribute('text');
+        step('TAP_CONFIRM', `Tapping "${txt}" via XPath`);
+        await anyBtn.click();
+        await sleep(3000);
+        confirmed = true;
+      } catch { /* ignore */ }
+    }
+
+    // PIN entry — scope cells to pinNumPad to avoid ID collision with amount numpad
+    const pin = process.env.MPESA_PIN || customer.pin || '';
+    if (pin) {
+      // wrong_pin scenario: enter a deliberately wrong PIN first
+      if (scenario === 'wrong_pin') {
+        step('ENTER_PIN', 'Entering wrong PIN (scenario test)');
+        const wrongPin = pin.split('').map(d => String((parseInt(d) + 1) % 10)).join('');
+        await sleep(1000);
+        const pinNumPadW = await driver.$(`id:${PKG}:id/pinNumPad`);
+        for (const digit of wrongPin) {
+          try {
+            const cell = await pinNumPadW.$(`android=new UiSelector().resourceId("${PKG}:id/cell${digit}")`);
+            await cell.click();
+            await sleep(500);
+          } catch { /* ignore */ }
+        }
+        broadcastFn({ type: 'event', data: { merchantId: customer.customer_id, event: 'VALIDATION_ERROR', field: 'PIN', step: 'pin_entry', channel: 'APP', timestamp: Date.now() } });
+        step('SCENARIO_INJECT', 'Wrong PIN entered — waiting for error, then retrying with correct PIN');
+        await sleep(4000); // wait for app to show error and reset
+      }
+
+      step('ENTER_PIN', `Entering ${pin.length}-digit PIN`);
+      await sleep(1000);
+      const pinNumPad = await driver.$(`id:${PKG}:id/pinNumPad`);
+      for (const digit of pin) {
+        try {
+          const cell = await pinNumPad.$(`android=new UiSelector().resourceId("${PKG}:id/cell${digit}")`);
+          await cell.click();
+          await sleep(500);
+        } catch {
+          const cellBounds = {
+            '1': [120, 1010], '2': [360, 1010], '3': [600, 1010],
+            '4': [120, 1147], '5': [360, 1147], '6': [600, 1147],
+            '7': [120, 1285], '8': [360, 1285], '9': [600, 1285],
+            '0': [360, 1423],
+          };
+          if (cellBounds[digit]) {
+            await driver.action('pointer', { parameters: { pointerType: 'touch' } })
+              .move({ x: cellBounds[digit][0], y: cellBounds[digit][1] })
+              .down().pause(100).up().perform();
+            await sleep(500);
+          }
+        }
+      }
+      step('PIN_ENTERED', 'PIN entered — awaiting confirmation');
+      await sleep(5000);
+    } else {
+      step('PIN_SKIPPED', 'No PIN configured — set MPESA_PIN in .env to complete');
+    }
+
+    step('PAYMENT_COMPLETE', `Payment of KES ${amount} to ${phone} submitted`);
+    broadcastFn({
+      type: 'event',
+      data: {
+        merchantId: customer.customer_id,
+        event:      'PAYMENT_CONFIRMED',
+        amount:     customer.installment_amount,
+        channel:    'APP',
+        userType:   'customer',
+        timestamp:  Date.now()
+      }
+    });
+
+  } catch (err) {
+    step('ERROR', err.message);
+    broadcastFn({
+      type: 'event',
+      data: {
+        merchantId: customer.customer_id,
+        event:      'PAYMENT_FAILED',
+        error:      err.message,
+        channel:    'APP',
+        userType:   'customer',
+        timestamp:  Date.now()
+      }
+    });
+  } finally {
+    if (driver) {
+      try { await driver.deleteSession(); } catch { /* ignore */ }
+    }
+  }
+}
+
+app.post('/customers/upload', upload.single('csvFile'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const customers = await parseCsvFile(req.file.path);
+    cachedCustomers = customers;
+
+    res.json({ success: true, customerCount: customers.length, customers });
+  } catch (error) {
+    res.status(400).json({ error: 'CSV Processing Failed', message: error.message });
+  }
+});
+
+app.get('/customers', async (req, res) => {
+  try {
+    if (!cachedCustomers) {
+      const csvPath = path.join(__dirname, '..', 'data', 'customers.csv');
+      cachedCustomers = await parseCsvFile(csvPath);
+    }
+    res.json(cachedCustomers);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch customers', message: error.message });
+  }
+});
+
+app.post('/simulate/customer', async (req, res) => {
+  try {
+    const { customerCount, simulationSpeed } = req.body;
+
+    if (!cachedCustomers || cachedCustomers.length === 0) {
+      // Try loading default
+      try {
+        const csvPath = path.join(__dirname, '..', 'data', 'customers.csv');
+        cachedCustomers = await parseCsvFile(csvPath);
+      } catch {
+        return res.status(400).json({ error: 'No customers loaded', message: 'Please upload customer CSV first' });
+      }
+    }
+
+    const count    = Math.min(customerCount || 5, cachedCustomers.length);
+    const selected = cachedCustomers.slice(0, count);
+    const config   = { simulationSpeed: simulationSpeed || 'normal', scenarioId: `customer-sim-${Date.now()}` };
+
+    console.log(`🚀 Starting customer payment simulation with ${count} customers`);
+
+    runCustomerSimulation(selected, config, (progress) => {
+      console.log('Customer sim progress:', progress);
+    })
+      .then(results => console.log('✅ Customer simulation completed:', results))
+      .catch(error  => console.error('❌ Customer simulation error:', error));
+
+    res.json({ success: true, message: 'Customer simulation started', customerCount: count, config });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to start customer simulation', message: error.message });
+  }
+});
+
+// Appium-driven app simulation — streams each step as a WebSocket event
+app.post('/simulate/customer/appium', async (req, res) => {
+  try {
+    const { customerId, scenario = 'normal' } = req.body;
+
+    if (!cachedCustomers) {
+      try {
+        const csvPath = path.join(__dirname, '..', 'data', 'customers.csv');
+        cachedCustomers = await parseCsvFile(csvPath);
+      } catch { /* no CSV — will use default profile below */ }
+    }
+
+    const customer = customerId
+      ? cachedCustomers?.find(c => c.customer_id === customerId) || cachedCustomers?.[0]
+      : cachedCustomers?.[0];
+
+    // If still no customer, use a default profile so the button always works
+    const effectiveCustomer = customer || {
+      customer_id:        'C001',
+      phone:              '254712510792',
+      installment_amount: 50,
+      description:        'request payment',
+      device_type:        'android_mid',
+      network_profile:    '4G_GOOD',
+      digital_literacy:   'intermediate',
+      payment_method:     'mpesa',
+      loan_balance:       4500,
+      days_until_due:     2,
+      missed_payments:    0
+    };
+
+    res.json({ success: true, message: 'Appium simulation started', customerId: effectiveCustomer.customer_id, scenario });
+
+    runAppiumSteps(effectiveCustomer, broadcastToClients, scenario).catch(err => {
+      console.error('Appium simulation error:', err);
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to start Appium simulation', message: error.message });
   }
 });
 

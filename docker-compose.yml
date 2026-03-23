@@ -56,3 +56,7 @@ services:
 networks:
   digital-twin-network:
     driver: bridge
+
+  # Customer agent image — pre-built, spawned on-demand per customer
+  # Build with: docker build -t customer-agent:latest ./customer-agent
+  # No Playwright needed — lightweight Node Alpine image

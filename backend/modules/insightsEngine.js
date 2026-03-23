@@ -122,6 +122,29 @@ function detectFrictionPoints() {
     });
   }
 
+  // Detect app-level errors and PIN failures
+  const appErrors = events.filter(e => e.event === 'APP_STEP' && e.step === 'ERROR');
+  if (appErrors.length >= 1) {
+    frictionPoints.push({
+      type: 'technical',
+      location: 'app_flow',
+      severity: appErrors.length >= 3 ? 'high' : 'medium',
+      count: appErrors.length,
+      description: `${appErrors.length} app automation error(s): ${appErrors[0]?.detail || 'unknown'}`
+    });
+  }
+
+  const pinErrors = events.filter(e => e.event === 'VALIDATION_ERROR' && e.field === 'PIN');
+  if (pinErrors.length >= 1) {
+    frictionPoints.push({
+      type: 'ux',
+      location: 'pin_entry',
+      severity: 'medium',
+      count: pinErrors.length,
+      description: `${pinErrors.length} incorrect PIN attempt(s) — users struggling with PIN entry`
+    });
+  }
+
   return frictionPoints;
 }
 
@@ -195,7 +218,8 @@ function analyzeNetworkImpact() {
     e.event === 'PAGE_LOAD' || 
     e.event === 'PAGE_LOAD_FAILED' ||
     e.event === 'NETWORK_DELAY' ||
-    e.event === 'TIMEOUT'
+    e.event === 'TIMEOUT' ||
+    (e.event === 'APP_STEP' && (e.step === 'NETWORK_DELAY' || e.step === 'NETWORK_TIMEOUT'))
   );
 
   if (networkEvents.length === 0) return [];

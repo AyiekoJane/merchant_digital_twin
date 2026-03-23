@@ -1,0 +1,11 @@
+customer_id,full_name,location,device_type,network_profile,digital_literacy,payment_method,loan_balance,installment_amount,days_until_due,missed_payments,patience_score
+C001,Aisha Mwangi,Kibera,android_low_end,2G_EDGE,basic,mpesa,4500,500,2,1,0.3
+C002,James Otieno,Kisumu,android_mid,3G_POOR,intermediate,mpesa,3200,400,5,0,0.6
+C003,Fatuma Hassan,Mombasa,android_low_end,2G_EDGE,basic,airtel,6000,600,0,2,0.2
+C004,Peter Kamau,Thika,android_mid,4G_UNSTABLE,intermediate,mpesa,2800,350,7,0,0.7
+C005,Grace Wanjiku,Nakuru,android_low_end,3G_POOR,basic,mpesa,5500,550,1,1,0.3
+C006,David Ochieng,Eldoret,android_mid,4G_GOOD,advanced,mpesa,1500,300,10,0,0.9
+C007,Mary Njoroge,Mathare,android_low_end,2G_EDGE,basic,mpesa,4000,400,3,1,0.4
+C008,Samuel Mutua,Machakos,android_mid,3G_POOR,intermediate,airtel,3800,450,6,0,0.6
+C009,Esther Chebet,Eldoret,android_mid,4G_GOOD,intermediate,mpesa,2200,300,8,0,0.8
+C010,Hassan Abdi,Eastleigh,android_low_end,3G_POOR,basic,mpesa,5000,500,1,2,0.2

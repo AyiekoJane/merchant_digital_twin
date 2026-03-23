@@ -25,6 +25,35 @@ function formatEventMessage(event) {
       const attempts = event.summary?.totalAttempts    ? ` (${event.summary.totalAttempts} attempts)` : '';
       return `${outcome} ${merchantId}${time}${attempts}${network}${literacy}`;
     }
+    case 'APP_STEP': {
+      const stepMeta = {
+        CONNECTING:          '🔌 Connecting to Appium',
+        APP_RESTART:         '🔄 App restarted',
+        POPUP_DISMISSED:     '✖️  Popup dismissed',
+        NAV_TRANSACT:        '📲 Tapped Transact tab',
+        TAP_REQUEST_PAYMENT: '💳 Tapped Request Payment',
+        TAP_REQUEST_ROW:     '👆 Tapped Request Payment row',
+        TAP_FROM_CUSTOMER:   '👤 Request Payment From Customer',
+        ENTER_PHONE:         '📞 Entered phone number',
+        SUBMIT_PHONE:        '▶️  CONTINUE (phone)',
+        ENTER_AMOUNT:        '💰 Entered amount',
+        SUBMIT_AMOUNT:       '▶️  CONTINUE (amount)',
+        ENTER_DESCRIPTION:   '📝 Entered description',
+        SUBMIT_DESCRIPTION:  '▶️  CONTINUE (description)',
+        CONFIRMATION_SCREEN: '🔍 Confirmation screen',
+        TAP_CONFIRM:         '✅ Tapped Confirm',
+        ENTER_PIN:           '🔐 Entering PIN',
+        PIN_ENTERED:         '⏳ PIN entered',
+        PIN_SKIPPED:         '⚠️  PIN skipped',
+        PAYMENT_COMPLETE:    '🎉 Payment submitted',
+        ERROR:               '❌ Error',
+      };
+      const label  = stepMeta[event.step] || `📍 ${event.step}`;
+      const detail = event.detail ? ` — ${event.detail}` : '';
+      return `${label}${detail} [${merchantId}]`;
+    }
+    case 'PAYMENT_CONFIRMED': return `🎉 ${merchantId} payment confirmed — KES ${event.amount || ''}`;
+    case 'PAYMENT_FAILED':    return `❌ ${merchantId} payment failed: ${event.error || 'unknown'}`;
     case 'PAGE_LOAD':              return `🌐 ${merchantId} loaded portal${url}${latency}${network}`;
     case 'PAGE_LOAD_FAILED':       return `❌ ${merchantId} failed to load portal${url}: ${event.error || 'unknown'}${network}`;
     case 'FIELD_FILLED':           return `✏️ ${merchantId} filled field: ${event.field || 'unknown'}${latency}${literacy}`;
@@ -57,10 +86,13 @@ function formatEventMessage(event) {
 function getEventClass(type) {
   if (!type) return 'ev-neutral';
   const t = type.toUpperCase();
-  if (t.includes('COMPLETE') || t.includes('SUCCESS')) return 'ev-success';
-  if (t.includes('FAIL') || t.includes('ERROR'))       return 'ev-error';
-  if (t.includes('RETRY') || t.includes('VALIDATION')) return 'ev-warn';
-  if (t.includes('START') || t.includes('LOAD'))       return 'ev-info';
+  if (t === 'APP_STEP')                                    return 'ev-app';
+  if (t === 'PAYMENT_CONFIRMED')                           return 'ev-success';
+  if (t === 'PAYMENT_FAILED')                              return 'ev-error';
+  if (t.includes('COMPLETE') || t.includes('SUCCESS'))    return 'ev-success';
+  if (t.includes('FAIL') || t.includes('ERROR'))          return 'ev-error';
+  if (t.includes('RETRY') || t.includes('VALIDATION'))    return 'ev-warn';
+  if (t.includes('START') || t.includes('LOAD'))          return 'ev-info';
   return 'ev-neutral';
 }
 

@@ -316,6 +316,7 @@
 .ev-warn    .li-event-pip { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.4); }
 .ev-info    .li-event-pip { background: #339af0; box-shadow: 0 0 6px rgba(51,154,240,0.4); }
 .ev-neutral .li-event-pip { background: #3d5c4a; }
+.ev-app     .li-event-pip { background: #a78bfa; box-shadow: 0 0 6px rgba(167,139,250,0.5); animation: li-pulse 1.4s ease infinite; }
 
 .li-event-msg {
   font-size: 0.78rem;
