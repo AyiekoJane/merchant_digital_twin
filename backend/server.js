@@ -546,6 +546,24 @@ app.get('/events/recent', (req, res) => {
   }
 });
 
+// All events grouped by merchant — used by BPMN flow visualization
+app.get('/events/by-merchant', (req, res) => {
+  try {
+    const { events } = require('./modules/metrics');
+    const byMerchant = {};
+    events.forEach(ev => {
+      const id = ev.merchantId;
+      if (!id) return;
+      if (!byMerchant[id]) byMerchant[id] = [];
+      byMerchant[id].push(ev);
+    });
+    res.json({ merchants: byMerchant, count: Object.keys(byMerchant).length });
+  } catch (error) {
+    console.error('Error fetching merchant events:', error);
+    res.status(500).json({ error: 'Failed to fetch merchant events', merchants: {} });
+  }
+});
+
 // ============================================================================
 // CHANNEL SIMULATION ENDPOINTS
 // ============================================================================

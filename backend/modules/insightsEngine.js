@@ -191,11 +191,14 @@ function analyzePersonaStruggles() {
 
 // Analyze network impact
 function analyzeNetworkImpact() {
-  const networkEvents = events.filter(e => 
-    e.event === 'PAGE_LOAD' || 
+  // Include summary events so we get per-profile success/failure counts
+  const networkEvents = events.filter(e =>
+    e.event === 'PAGE_LOAD' ||
     e.event === 'PAGE_LOAD_FAILED' ||
     e.event === 'NETWORK_DELAY' ||
-    e.event === 'TIMEOUT'
+    e.event === 'TIMEOUT' ||
+    e.event === 'ONBOARDING_SUMMARY' ||
+    e.event === 'SUMMARY'
   );
 
   if (networkEvents.length === 0) return [];
@@ -208,37 +211,51 @@ function analyzeNetworkImpact() {
       byProfile[profile] = {
         totalEvents: 0,
         failures: 0,
-        avgLatency: 0,
+        successes: 0,
         latencies: []
       };
     }
 
-    byProfile[profile].totalEvents++;
-    
-    if (e.event === 'PAGE_LOAD_FAILED' || e.event === 'TIMEOUT') {
-      byProfile[profile].failures++;
+    // Count page-level events
+    if (e.event === 'PAGE_LOAD' || e.event === 'PAGE_LOAD_FAILED' ||
+        e.event === 'NETWORK_DELAY' || e.event === 'TIMEOUT') {
+      byProfile[profile].totalEvents++;
+      if (e.event === 'PAGE_LOAD_FAILED' || e.event === 'TIMEOUT') {
+        byProfile[profile].failures++;
+      }
     }
 
-    if (e.latency) {
-      byProfile[profile].latencies.push(e.latency);
+    // Count summary outcomes
+    if (e.event === 'ONBOARDING_SUMMARY' || e.event === 'SUMMARY') {
+      byProfile[profile].totalEvents++;
+      if (e.summary?.success) byProfile[profile].successes++;
+      else byProfile[profile].failures++;
     }
+
+    // Collect latency — workers emit loadTimeMs on PAGE_LOAD
+    const lat = e.latency || e.loadTimeMs || e.loadTime;
+    if (lat) byProfile[profile].latencies.push(lat);
   });
 
   return Object.entries(byProfile).map(([profile, stats]) => {
-    const avgLatency = stats.latencies.length > 0 ?
-      Math.round(stats.latencies.reduce((a, b) => a + b, 0) / stats.latencies.length) : 0;
-    
-    const failureRate = stats.totalEvents > 0 ? 
-      parseFloat((stats.failures / stats.totalEvents * 100).toFixed(1)) : 0;
+    const avgLatency = stats.latencies.length > 0
+      ? Math.round(stats.latencies.reduce((a, b) => a + b, 0) / stats.latencies.length)
+      : 0;
+
+    const failureRate = stats.totalEvents > 0
+      ? parseFloat((stats.failures / stats.totalEvents * 100).toFixed(1))
+      : 0;
 
     return {
       profile,
       avgLatency,
       failureRate,
       failures: stats.failures,
+      successes: stats.successes,
       totalEvents: stats.totalEvents
     };
-  }).filter(item => item.totalEvents >= 2);
+  }).filter(item => item.totalEvents >= 1)
+    .sort((a, b) => b.failureRate - a.failureRate);
 }
 
 // Compute failure breakdown by step (from ONBOARDING_SUMMARY failedAtStep)

@@ -25,21 +25,21 @@ export default function GuidedStepper({
   onRunSimulation, isRunning, statusMessage, loadingCsvs,
 }) {
   const [currentStep,       setCurrentStep]       = useState(1);
-  const [selectedChannel,   setSelectedChannel]   = useState('web');
+  const [selectedChannel,   setSelectedChannel]   = useState(null);
   const [validationSummary, setValidationSummary] = useState(null);
   const [dragOver,          setDragOver]          = useState(null);
   const contentRef = useRef(null);
 
-  // Auto-advance on file upload
+  // Auto-advance on file upload (only when on that step, not on back-navigation)
   useEffect(() => {
     if (uploadedFiles.merchants && currentStep === 1) setCurrentStep(2);
-  }, [uploadedFiles.merchants, currentStep]);
+  }, [uploadedFiles.merchants]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (uploadedFiles.network && currentStep === 2) setCurrentStep(3);
-  }, [uploadedFiles.network, currentStep]);
+  }, [uploadedFiles.network]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (uploadedFiles.bio && currentStep === 3) setCurrentStep(4);
-  }, [uploadedFiles.bio, currentStep]);
+  }, [uploadedFiles.bio]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Validation summary
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function GuidedStepper({
     if (id === 2) return !!uploadedFiles.network;
     if (id === 3) return !!uploadedFiles.bio;
     if (id === 4) return !!selectedChannel;
-    if (id === 5) return true;
+    if (id === 5) return merchantCount > 0;
     return false;
   };
 
@@ -217,8 +217,7 @@ export default function GuidedStepper({
                     </div>
                   </button>
                 ))}
-              </div>
-            </StepShell>
+              </div>            </StepShell>
           )}
 
           {/* Step 5 – Portal config */}
@@ -300,7 +299,7 @@ export default function GuidedStepper({
                   </ReviewCard>
 
                   <ReviewCard icon="⚙️" title="Configuration">
-                    <ReviewRow label="Channel"  value={selectedChannel.toUpperCase()} />
+                    <ReviewRow label="Channel"  value={(selectedChannel || 'none').toUpperCase()} />
                     <ReviewRow label="Merchants" value={`${merchantCount} agents`} />
                     <ReviewRow label="Speed"    value={simulationSpeed || 'normal'} />
                     <ReviewRow label="Network Δ" value={networkVariability ? 'On' : 'Off'} />

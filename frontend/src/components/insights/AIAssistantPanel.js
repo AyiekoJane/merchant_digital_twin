@@ -25,7 +25,7 @@ function AIAssistantPanel({ insights, summary }) {
       newMessages.push({
         id: 'friction-0',
         type: 'alert',
-        text: `⚠️ ${f.count} merchants hit friction at "${f.location}" — ${f.description}`,
+        text: `${f.count} merchants hit friction at "${f.location}" — ${f.description}`,
         timestamp: new Date().toLocaleTimeString()
       });
     }
@@ -36,7 +36,7 @@ function AIAssistantPanel({ insights, summary }) {
         newMessages.push({
           id: `persona-${i}`,
           type: 'insight',
-          text: `👥 ${s.persona}: ${s.count}/${s.total} failed (${s.failureRate}% failure rate)`,
+          text: `${s.persona}: ${s.count}/${s.total} failed (${s.failureRate}% failure rate)`,
           timestamp: new Date().toLocaleTimeString()
         });
       });
@@ -49,7 +49,7 @@ function AIAssistantPanel({ insights, summary }) {
       newMessages.push({
         id: 'network-2g',
         type: 'warning',
-        text: `📡 2G_EDGE: ${edge.failed}/${edge.total} failed — avg ${edge.avgDuration}ms`,
+        text: `2G_EDGE: ${edge.failed}/${edge.total} failed — avg ${edge.avgDuration}ms`,
         timestamp: new Date().toLocaleTimeString()
       });
     }
@@ -58,7 +58,7 @@ function AIAssistantPanel({ insights, summary }) {
       newMessages.push({
         id: 'network-3g',
         type: 'warning',
-        text: `📡 3G_POOR: ${poor3g.failed}/${poor3g.total} failed — avg ${poor3g.avgDuration}ms`,
+        text: `3G_POOR: ${poor3g.failed}/${poor3g.total} failed — avg ${poor3g.avgDuration}ms`,
         timestamp: new Date().toLocaleTimeString()
       });
     }
@@ -75,7 +75,7 @@ function AIAssistantPanel({ insights, summary }) {
       newMessages.push({
         id: 'step-worst',
         type: 'recommendation',
-        text: `🎯 Worst step: "${worst.step}" — ${worst.failed}/${worst.total} failed (${(worst.rate * 100).toFixed(0)}%)`,
+        text: `Worst step: "${worst.step}" — ${worst.failed}/${worst.total} failed (${(worst.rate * 100).toFixed(0)}%)`,
         timestamp: new Date().toLocaleTimeString()
       });
     }
@@ -86,7 +86,7 @@ function AIAssistantPanel({ insights, summary }) {
       newMessages.push({
         id: 'op-summary',
         type: op.completionRate >= 70 ? 'success' : 'alert',
-        text: `📊 ${op.completionRate}% completion — ${op.dropoffs} failures out of ${op.activeAgents} merchants`,
+        text: `${op.completionRate}% completion — ${op.dropoffs} failures out of ${op.activeAgents} merchants`,
         timestamp: new Date().toLocaleTimeString()
       });
     }

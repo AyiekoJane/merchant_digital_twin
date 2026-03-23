@@ -12,7 +12,7 @@ const { Redis: IORedis } = require('ioredis');
 const REDIS_HOST = process.env.REDIS_HOST || 'redis';
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379');
 const INSIGHT_SERVICE_URL = process.env.INSIGHT_SERVICE_URL || 'http://insight-service:3000';
-const MAX_CONTEXTS = parseInt(process.env.MAX_CONTEXTS || '50');
+const MAX_CONTEXTS = parseInt(process.env.MAX_CONTEXTS || '5'); // reduced: 5 contexts × 5 workers = 25 concurrent
 const WORKER_ID = process.env.HOSTNAME || `worker-${process.pid}`;
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -22,12 +22,12 @@ let activeContexts = 0;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const random = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-// Network latency map (ms)
+// Network latency map (ms) — simulates realistic but not punishing delays
 const NETWORK_LATENCY = {
-  '4G_GOOD': 100,
-  '4G_UNSTABLE': 300,
-  '3G_POOR': 800,
-  '2G_EDGE': 1500
+  '4G_GOOD':     80,
+  '4G_UNSTABLE': 200,
+  '3G_POOR':     500,
+  '2G_EDGE':     900,
 };
 
 // Device viewport map
@@ -81,16 +81,18 @@ function typingDelay(digitalLiteracy) {
 
 // ── Success Probability ───────────────────────────────────────────────────────
 function calcSuccessProbability(merchant) {
-  let p = 0.7;
-  if (merchant.digitalLiteracy === 'advanced') p += 0.2;
-  else if (merchant.digitalLiteracy === 'intermediate') p += 0.1;
-  if (merchant.networkProfile === '2G_EDGE') p -= 0.2;
-  else if (merchant.networkProfile === '3G_POOR') p -= 0.1;
-  if (merchant.deviceType === 'ios') p += 0.05;
+  let p = 0.75; // raised base
+  if (merchant.digitalLiteracy === 'advanced')      p += 0.15;
+  else if (merchant.digitalLiteracy === 'intermediate') p += 0.08;
+  else if (merchant.digitalLiteracy === 'basic')    p -= 0.10;
+  if (merchant.networkProfile === '2G_EDGE')        p -= 0.15;
+  else if (merchant.networkProfile === '3G_POOR')   p -= 0.08;
+  else if (merchant.networkProfile === '4G_GOOD')   p += 0.05;
+  if (merchant.deviceType === 'ios')                p += 0.05;
+  else if (merchant.deviceType === 'feature_phone') p -= 0.05;
   p += (merchant.patienceScore || 0.5) * 0.1;
-  // Apply scenario bonus if present
   p += merchant.scenarioConfig?.successProbabilityBonus || 0;
-  return Math.max(0.3, Math.min(0.95, p));
+  return Math.max(0.45, Math.min(0.97, p)); // floor raised to 0.45
 }
 
 // ── Core Simulation (runs inside a browser context) ───────────────────────────
@@ -111,7 +113,15 @@ async function runMerchantSimulation(page, merchant) {
     currentStep++;
     await networkDelay(merchant.networkProfile);
     const navStart = Date.now();
-    const response = await page.goto(portalUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    // Timeout scales with network quality — slow networks get more time
+    const navTimeout = {
+      '4G_GOOD':     15000,
+      '4G_UNSTABLE': 25000,
+      '3G_POOR':     45000,
+      '2G_EDGE':     60000,
+    }[merchant.networkProfile] || 30000;
+
+    const response = await page.goto(portalUrl, { waitUntil: 'domcontentloaded', timeout: navTimeout });
     const loadTime = Date.now() - navStart;
 
     if (!response || !response.ok()) throw new Error(`Portal returned ${response?.status()}`);

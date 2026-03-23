@@ -106,9 +106,9 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - INSIGHT_SERVICE_URL=http://backend:3000
-      - MAX_CONTEXTS=${MAX_CONTEXTS_PER_WORKER:-50}
+      - MAX_CONTEXTS=${MAX_CONTEXTS_PER_WORKER:-5}
     deploy:
-      replicas: ${SIM_WORKER_COUNT:-20}
+      replicas: ${SIM_WORKER_COUNT:-5}
       resources:
         limits:
           memory: 2g

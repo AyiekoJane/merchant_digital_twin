@@ -75,11 +75,19 @@ function AIInsights({ insights }) {
               <div key={idx} className="network-item">
                 <div className="network-header">
                   <span className="network-profile">{impact.profile}</span>
-                  <span className="latency">{impact.avgLatency}ms avg</span>
+                  <span className="latency">{impact.avgLatency > 0 ? `${impact.avgLatency}ms avg` : 'no latency data'}</span>
                 </div>
                 <div className="network-stats">
                   <span>Failure Rate: {impact.failureRate}%</span>
+                  <span>✅ {impact.successes ?? 0} passed</span>
+                  <span>❌ {impact.failures} failed</span>
                   <span>Events: {impact.totalEvents}</span>
+                </div>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill failure"
+                    style={{ width: `${impact.failureRate}%` }}
+                  />
                 </div>
               </div>
             ))}
