@@ -75,3 +75,6 @@ cd cli
 node report.js           # full simulation report
 node compare.js          # compare two scenarios
 ```
+$env:ANDROID_HOME = [System.Environment]::GetEnvironmentVariable("ANDROID_HOME", "User")
+>> $env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
+>> appium
