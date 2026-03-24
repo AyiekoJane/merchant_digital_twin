@@ -21,24 +21,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # ── Insight Service (port 3002) ────────────────────────────────────────────
-  insight-service:
-    build:
-      context: ./insight-service
-      dockerfile: Dockerfile
-    container_name: insight-service
-    ports:
-      - "3002:3000"
-    networks:
-      - digital-twin-network
-    environment:
-      - NODE_ENV=production
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
   # ── Merchant Generator (port 3001) ─────────────────────────────────────────
   merchant-generator:
     build:
@@ -98,8 +80,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      backend:
-        condition: service_started
     networks:
       - digital-twin-network
     environment:
@@ -134,6 +114,9 @@ services:
       - PORT=3000
       - SIMULATION_QUEUE_URL=http://simulation-queue:3005
       - ONBOARDING_URL=http://mock-portal/index.html
+      - APPIUM_HOST=host.docker.internal
+      - APPIUM_PORT=4723
+      # ANDROID_HOME intentionally not set — Appium runs on host, not in container
     env_file:
       - ./backend/.env
     volumes:

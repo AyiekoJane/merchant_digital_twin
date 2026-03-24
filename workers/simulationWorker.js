@@ -11,7 +11,7 @@ const { Redis: IORedis } = require('ioredis');
 // ── Config ────────────────────────────────────────────────────────────────────
 const REDIS_HOST = process.env.REDIS_HOST || 'redis';
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379');
-const INSIGHT_SERVICE_URL = process.env.INSIGHT_SERVICE_URL || 'http://insight-service:3000';
+const INSIGHT_SERVICE_URL = process.env.INSIGHT_SERVICE_URL || 'http://backend:3000';
 const MAX_CONTEXTS = parseInt(process.env.MAX_CONTEXTS || '5'); // reduced: 5 contexts × 5 workers = 25 concurrent
 const WORKER_ID = process.env.HOSTNAME || `worker-${process.pid}`;
 
@@ -46,17 +46,13 @@ const USER_AGENTS = {
   'feature_phone': 'Mozilla/5.0 (Linux; Android 4.4.2; Nokia 1) AppleWebKit/537.36'
 };
 
-// ── Event Emitter ─────────────────────────────────────────────────────────────
-async function emitEvent(eventData) {
-  try {
-    await fetch(`${INSIGHT_SERVICE_URL}/simulation-event`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...eventData, workerId: WORKER_ID, timestamp: Date.now() })
-    });
-  } catch {
-    // Non-fatal - insight service may be briefly unavailable
-  }
+// ── Event Emitter (fire-and-forget — never blocks simulation steps) ───────────
+function emitEvent(eventData) {
+  fetch(`${INSIGHT_SERVICE_URL}/simulation-event`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...eventData, workerId: WORKER_ID, timestamp: Date.now() })
+  }).catch(() => { /* Non-fatal */ });
 }
 // ── Human-like Delays ─────────────────────────────────────────────────────────
 async function networkDelay(networkProfile) {

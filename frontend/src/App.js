@@ -5,6 +5,7 @@ import SimulationConsole from './components/SimulationConsole';
 import LiveInsights from './components/LiveInsights';
 import ScenarioTesting from './components/ScenarioTesting';
 import MerchantAppConsole from './components/MerchantAppConsole';
+import ComplianceReport from './components/ComplianceReport';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -36,6 +37,7 @@ function App() {
     { id: 'insights',  label: 'Live Insights', icon: '🔭' },
     { id: 'testing',   label: 'Scenarios', icon: '🧩' },
     { id: 'merchants-app', label: 'Business App Simulation', icon: '💳' },
+    { id: 'compliance', label: 'Compliance Report', icon: '📋' },
   ];
 
   return (
@@ -76,6 +78,7 @@ function App() {
           {activeTab === 'insights'  && <LiveInsights />}
           {activeTab === 'testing'   && <ScenarioTesting />}
           {activeTab === 'merchants-app' && <MerchantAppConsole onNavigate={handleNavigate} />}
+          {activeTab === 'compliance'    && <ComplianceReport />}
         </div>
       </main>
     </div>

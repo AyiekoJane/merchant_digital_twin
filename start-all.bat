@@ -29,13 +29,18 @@ echo   Workers:         %SIM_WORKER_COUNT%
 echo   Contexts/worker: %MAX_CONTEXTS_PER_WORKER%
 echo.
 
-echo [1/3] Starting Docker services (Redis, Queue, Workers, Backend, Insight Service...)
+echo [1/4] Starting Appium server (for app simulation)...
+set ANDROID_HOME=C:\Users\Jane\AppData\Local\Android\Sdk
+set ANDROID_SDK_ROOT=C:\Users\Jane\AppData\Local\Android\Sdk
+start "Appium" cmd /k "set ANDROID_HOME=C:\Users\Jane\AppData\Local\Android\Sdk && set ANDROID_SDK_ROOT=C:\Users\Jane\AppData\Local\Android\Sdk && appium --address 0.0.0.0 --port 4723"
+
+echo [2/4] Starting Docker services (Redis, Queue, Workers, Backend, Mock Portal)...
 start "Docker Compose" cmd /k "docker compose up --build --scale simulation-worker=%SIM_WORKER_COUNT%"
 
 echo Waiting for backend to be ready...
 timeout /t 15 /nobreak >nul
 
-echo [2/3] Starting Frontend (port 3001)...
+echo [3/4] Starting Frontend (port 3003)...
 start "Frontend" cmd /k "cd frontend && npm start"
 
 echo.
@@ -43,10 +48,10 @@ echo ========================================
 echo All services starting:
 echo   Backend API    : http://localhost:3000
 echo   Frontend UI    : http://localhost:3003
-echo   Insight Service: http://localhost:3002
 echo   Merchant Gen   : http://localhost:3001
 echo   Queue Stats    : http://localhost:3005/stats
 echo   Mock Portal    : http://localhost:8888
+echo   Appium         : http://localhost:4723
 echo ========================================
 echo.
 echo Close the opened terminal windows to stop services.

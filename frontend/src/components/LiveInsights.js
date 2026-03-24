@@ -79,8 +79,7 @@ function LiveInsights({ showToast }) {
   const wsRef = useRef(null);
   const timelineRef = useRef(null);
 
-  const connectWebSocket = useCallback(() => {
-    try {
+  const connectWebSocket = useCallback(() => {    try {
       const ws = new WebSocket('ws://localhost:3000');
 
       ws.onopen = () => {
@@ -120,22 +119,20 @@ function LiveInsights({ showToast }) {
 
       wsRef.current = ws;
     } catch { setWsStatus('polling'); }
-  }, [showToast]);
+  }, []); // no deps — stable reference, avoids WS reconnect loop
 
   useEffect(() => {
     fetchInsights();
-    fetchEvents();
+    fetchEvents();   // seed once on mount
     connectWebSocket();
 
     const insightsInterval = setInterval(fetchInsights, 5000);
-    const eventsInterval   = setInterval(fetchEvents,   3000);
     const queueInterval    = setInterval(fetchQueueStats, 2000);
 
     fetchQueueStats();
 
     return () => {
       clearInterval(insightsInterval);
-      clearInterval(eventsInterval);
       clearInterval(queueInterval);
       wsRef.current?.close();
     };
@@ -165,15 +162,22 @@ function LiveInsights({ showToast }) {
     try {
       const res  = await fetch('http://localhost:3000/events/recent?limit=50');
       const data = await res.json();
+      // Only seed from HTTP if WS hasn't delivered any live events yet
       if (data.events?.length) {
-        setRawEvents(data.events);
-        setEvents(data.events.map(ev => ({
-          timestamp:  new Date(ev.timestamp).toLocaleTimeString(),
-          message:    formatEventMessage(ev),
-          type:       ev.event || ev.eventType,
-          merchantId: ev.merchantId,
-          id:         ev.id || Math.random(),
-        })));
+        setRawEvents(prev => {
+          if (prev.length > 0) return prev; // WS already has data — don't overwrite
+          return data.events;
+        });
+        setEvents(prev => {
+          if (prev.length > 0) return prev;
+          return data.events.map(ev => ({
+            timestamp:  new Date(ev.timestamp).toLocaleTimeString(),
+            message:    formatEventMessage(ev),
+            type:       ev.event || ev.eventType,
+            merchantId: ev.merchantId,
+            id:         ev.id || Math.random(),
+          }));
+        });
       }
     } catch { /* silent */ }
   };
